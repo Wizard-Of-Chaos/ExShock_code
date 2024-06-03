@@ -1,0 +1,874 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="src\systems\AIUpdateSystem.cpp">
+      <Filter>Sources\Systems</Filter>
+    </ClCompile>
+    <ClCompile Include="src\systems\CollisionCheckingSystem.cpp">
+      <Filter>Sources\Systems</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\GameController.cpp">
+      <Filter>Sources\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\GameStateController.cpp">
+      <Filter>Sources\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utilities\GameFunctions.cpp">
+      <Filter>Sources\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\GuiController.cpp">
+      <Filter>Sources\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gui\GuiMainMenu.cpp">
+      <Filter>Sources\Gui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gui\GuiPauseMenu.cpp">
+      <Filter>Sources\Gui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\systems\HealthAndShieldSystems.cpp">
+      <Filter>Sources\Systems</Filter>
+    </ClCompile>
+    <ClCompile Include="src\systems\IrrlichtRigidBodyPositionSystem.cpp">
+      <Filter>Sources\Systems</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utilities\IrrlichtUtils.cpp">
+      <Filter>Sources\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\main.cpp">
+      <Filter>Sources\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\Networking.cpp">
+      <Filter>Sources\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\systems\PlayerUpdateSystem.cpp">
+      <Filter>Sources\Systems</Filter>
+    </ClCompile>
+    <ClCompile Include="src\systems\ProjectileSystem.cpp">
+      <Filter>Sources\Systems</Filter>
+    </ClCompile>
+    <ClCompile Include="src\systems\ShipControlSystem.cpp">
+      <Filter>Sources\Systems</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utilities\ShipMovementUtils.cpp">
+      <Filter>Sources\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="src\systems\WeaponFiringSystem.cpp">
+      <Filter>Sources\Systems</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gui\GuiDialog.cpp">
+      <Filter>Sources\Gui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gui\hud\HUDActiveSelection.cpp">
+      <Filter>Sources\Gui\HUD</Filter>
+    </ClCompile>
+    <ClCompile Include="src\systems\SensorUpdateSystem.cpp">
+      <Filter>Sources\Systems</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gui\hud\HUDContact.cpp">
+      <Filter>Sources\Gui\HUD</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utilities\GvReader.cpp">
+      <Filter>Sources\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utilities\Config.cpp">
+      <Filter>Sources\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gui\hud\HUDHealthBar.cpp">
+      <Filter>Sources\Gui\HUD</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gui\GuiDeathMenu.cpp">
+      <Filter>Sources\Gui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utilities\AttributeReaders.cpp">
+      <Filter>Sources\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="src\systems\ShipUpdateSystem.cpp">
+      <Filter>Sources\Systems</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gui\GuiSettingsMenu.cpp">
+      <Filter>Sources\Gui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utilities\ProjectileUtils.cpp">
+      <Filter>Sources\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utilities\btUtils.cpp">
+      <Filter>Sources\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="src\systems\DamageSystem.cpp">
+      <Filter>Sources\Systems</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utilities\ObstacleUtils.cpp">
+      <Filter>Sources\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utilities\ShipUtils.cpp">
+      <Filter>Sources\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="src\systems\SoundSystem.cpp">
+      <Filter>Sources\Systems</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\GameAssets.cpp">
+      <Filter>Sources\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gui\GuiCampaignMenu.cpp">
+      <Filter>Sources\Gui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gui\GuiLootMenu.cpp">
+      <Filter>Sources\Gui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utilities\LargeShipUtils.cpp">
+      <Filter>Sources\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="src\systems\HangarSystem.cpp">
+      <Filter>Sources\Systems</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utilities\WeaponUtils.cpp">
+      <Filter>Sources\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\flecs.c">
+      <Filter>Sources\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\systems\ai_systems\AITypes.cpp">
+      <Filter>Sources\Systems\AI_Systems</Filter>
+    </ClCompile>
+    <ClCompile Include="src\systems\ThrustSystem.cpp">
+      <Filter>Sources\Systems</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\Campaign.cpp">
+      <Filter>Sources\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\Sector.cpp">
+      <Filter>Sources\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\Dialogue.cpp">
+      <Filter>Sources\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utilities\DialogueEffects.cpp">
+      <Filter>Sources\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\AudioDriver.cpp">
+      <Filter>Sources\Core\Audio</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\AudioBuffer.cpp">
+      <Filter>Sources\Core\Audio</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\AudioSource.cpp">
+      <Filter>Sources\Core\Audio</Filter>
+    </ClCompile>
+    <ClCompile Include="src\systems\ai_systems\ObstacleAI.cpp">
+      <Filter>Sources\Systems\AI_Systems</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gui\GuiDialogueMenu.cpp">
+      <Filter>Sources\Gui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gui\GuiLoadoutMenu.cpp">
+      <Filter>Sources\Gui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gui\LoadoutTab.cpp">
+      <Filter>Sources\Gui\LoadoutTabs</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gui\WingTab.cpp">
+      <Filter>Sources\Gui\LoadoutTabs</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gui\ShipTab.cpp">
+      <Filter>Sources\Gui\LoadoutTabs</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gui\WeaponTab.cpp">
+      <Filter>Sources\Gui\LoadoutTabs</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gui\CarrierTab.cpp">
+      <Filter>Sources\Gui\LoadoutTabs</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gui\GuiFabMenu.cpp">
+      <Filter>Sources\Gui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gui\FabMenuTab.cpp">
+      <Filter>Sources\Gui\FabMenuTabs</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gui\ShipBuildTab.cpp">
+      <Filter>Sources\Gui\FabMenuTabs</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gui\WeaponBuildTab.cpp">
+      <Filter>Sources\Gui\FabMenuTabs</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gui\UpgradeTab.cpp">
+      <Filter>Sources\Gui\FabMenuTabs</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gui\CarrierUpgradeTab.cpp">
+      <Filter>Sources\Gui\FabMenuTabs</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utilities\ShipUpgrades.cpp">
+      <Filter>Sources\Utilities\instances</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utilities\WeaponUpgrades.cpp">
+      <Filter>Sources\Utilities\instances</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gui\GuiMessHallMenu.cpp">
+      <Filter>Sources\Gui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gui\SettingsTab.cpp">
+      <Filter>Sources\Gui\SettingsTabs</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gui\VideoTab.cpp">
+      <Filter>Sources\Gui\SettingsTabs</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gui\KeybindTab.cpp">
+      <Filter>Sources\Gui\SettingsTabs</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gui\GuiLaunchMenu.cpp">
+      <Filter>Sources\Gui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utilities\CarrierUpgrades.cpp">
+      <Filter>Sources\Utilities\instances</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gui\GuiOptionsMenu.cpp">
+      <Filter>Sources\Gui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gui\OptionsTab.cpp">
+      <Filter>Sources\Gui\OptionsTabs</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gui\LoadGameTab.cpp">
+      <Filter>Sources\Gui\OptionsTabs</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gui\SaveGameTab.cpp">
+      <Filter>Sources\Gui\OptionsTabs</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gui\GuiCreditsMenu.cpp">
+      <Filter>Sources\Gui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gui\GameTab.cpp">
+      <Filter>Sources\Gui\SettingsTabs</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\SensorCallbackComponent.cpp">
+      <Filter>Sources\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\Scenario.cpp">
+      <Filter>Sources\Core\Scenario</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utilities\StationModuleUtils.cpp">
+      <Filter>Sources\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="src\systems\CleanupSystems.cpp">
+      <Filter>Sources\Systems</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gui\hud\HUDPopup.cpp">
+      <Filter>Sources\Gui\HUD</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\Objective.cpp">
+      <Filter>Sources\Core\Scenario</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gui\hud\HUDComms.cpp">
+      <Filter>Sources\Gui\HUD</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\InputComponent.cpp">
+      <Filter>Sources\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gui\hud\HUDFillBar.cpp">
+      <Filter>Sources\Gui\HUD</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\RandomGeneration.cpp">
+      <Filter>Sources\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gui\hud\HUDLargePopup.cpp">
+      <Filter>Sources\Gui\HUD</Filter>
+    </ClCompile>
+    <ClCompile Include="src\systems\StatusEffectSystem.cpp">
+      <Filter>Sources\Systems</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\StationModuleComponent.cpp">
+      <Filter>Sources\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\MapRunner.cpp">
+      <Filter>Sources\Core\Scenario</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utilities\MissionUtils.cpp">
+      <Filter>Sources\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utilities\TurretUtils.cpp">
+      <Filter>Sources\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utilities\StatusEffects.cpp">
+      <Filter>Sources\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="src\systems\NetworkingSystem.cpp">
+      <Filter>Sources\Systems</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fx\Shaders.cpp">
+      <Filter>Sources\fx</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fx\BaedsLightManager.cpp">
+      <Filter>Sources\fx</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fx\BeamSceneNode.cpp">
+      <Filter>Sources\fx</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fx\FadeInParticleAffector.cpp">
+      <Filter>Sources\fx</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fx\GeometryCreators.cpp">
+      <Filter>Sources\fx</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fx\NodeAnimators.cpp">
+      <Filter>Sources\fx</Filter>
+    </ClCompile>
+    <ClCompile Include="src\systems\ai_systems\FrigateAI.cpp">
+      <Filter>Sources\Systems\AI_Systems</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\CrashLogger.cpp">
+      <Filter>Sources\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gui\hud\HUDHazard.cpp">
+      <Filter>Sources\Gui\HUD</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gui\GuiMultiplayerMenu.cpp">
+      <Filter>Sources\Gui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fx\MotionTrailSceneNode.cpp">
+      <Filter>Sources\fx</Filter>
+    </ClCompile>
+    <ClCompile Include="src\systems\TimeKeepingSystem.cpp">
+      <Filter>Sources\Systems</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\systems\AIUpdateSystem.h">
+      <Filter>Headers\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\BaseHeader.h">
+      <Filter>Headers\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\systems\CollisionCheckingSystem.h">
+      <Filter>Headers\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\GameController.h">
+      <Filter>Headers\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utilities\GameAssets.h">
+      <Filter>Headers\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\GameStateController.h">
+      <Filter>Headers\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utilities\GameFunctions.h">
+      <Filter>Headers\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\GuiController.h">
+      <Filter>Headers\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gui\GuiDialog.h">
+      <Filter>Headers\Gui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gui\GuiMainMenu.h">
+      <Filter>Headers\Gui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gui\GuiPauseMenu.h">
+      <Filter>Headers\Gui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\systems\HealthAndShieldSystems.h">
+      <Filter>Headers\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="src\systems\IrrlichtRigidBodyPositionSystem.h">
+      <Filter>Headers\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utilities\IrrlichtUtils.h">
+      <Filter>Headers\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gui\MenuData.h">
+      <Filter>Headers\Gui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\Networking.h">
+      <Filter>Headers\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\systems\PlayerUpdateSystem.h">
+      <Filter>Headers\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="src\systems\ProjectileSystem.h">
+      <Filter>Headers\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="src\systems\ShipControlSystem.h">
+      <Filter>Headers\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utilities\ShipMovementUtils.h">
+      <Filter>Headers\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="src\systems\WeaponFiringSystem.h">
+      <Filter>Headers\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gui\hud\HUDElement.h">
+      <Filter>Headers\Gui\HUD</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gui\hud\HUDActiveSelection.h">
+      <Filter>Headers\Gui\HUD</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gui\hud\HUDHeader.h">
+      <Filter>Headers\Gui\HUD</Filter>
+    </ClInclude>
+    <ClInclude Include="src\systems\SensorUpdateSystem.h">
+      <Filter>Headers\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gui\hud\HUDContact.h">
+      <Filter>Headers\Gui\HUD</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utilities\Config.h">
+      <Filter>Headers\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utilities\GvReader.h">
+      <Filter>Headers\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gui\hud\HUDHealthBar.h">
+      <Filter>Headers\Gui\HUD</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gui\GuiDeathMenu.h">
+      <Filter>Headers\Gui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utilities\AttributeReaders.h">
+      <Filter>Headers\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="src\systems\ShipUpdateSystem.h">
+      <Filter>Headers\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gui\GuiSettingsMenu.h">
+      <Filter>Headers\Gui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utilities\ProjectileUtils.h">
+      <Filter>Headers\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utilities\LoadoutData.h">
+      <Filter>Headers\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utilities\btUtils.h">
+      <Filter>Headers\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="src\systems\DamageSystem.h">
+      <Filter>Headers\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="src\components\HarpoonComponent.h">
+      <Filter>Headers\Components\Weapon Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\components\MissileComponent.h">
+      <Filter>Headers\Components\Weapon Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\components\WeaponInfoComponent.h">
+      <Filter>Headers\Components\Weapon Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\components\BulletRigidBodyComponent.h">
+      <Filter>Headers\Components\Basic Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\components\IrrlichtComponent.h">
+      <Filter>Headers\Components\Basic Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\components\ObstacleComponent.h">
+      <Filter>Headers\Components\Basic Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\components\PlayerComponent.h">
+      <Filter>Headers\Components\Player Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\components\InputComponent.h">
+      <Filter>Headers\Components\Player Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\components\HealthComponent.h">
+      <Filter>Headers\Components\Basic Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\components\ShipComponent.h">
+      <Filter>Headers\Components\Ship Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\components\AIComponent.h">
+      <Filter>Headers\Components\Basic Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\components\FactionComponent.h">
+      <Filter>Headers\Components\Ship Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\components\SensorComponent.h">
+      <Filter>Headers\Components\Ship Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utilities\ObstacleUtils.h">
+      <Filter>Headers\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utilities\ShipUtils.h">
+      <Filter>Headers\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="src\components\BulletGhostComponent.h">
+      <Filter>Headers\Components\Basic Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\systems\SoundSystem.h">
+      <Filter>Headers\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\Campaign.h">
+      <Filter>Headers\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gui\GuiCampaignMenu.h">
+      <Filter>Headers\Gui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\components\ShipParticleComponent.h">
+      <Filter>Headers\Components\Ship Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gui\GuiLootMenu.h">
+      <Filter>Headers\Gui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\components\HangarComponent.h">
+      <Filter>Headers\Components\Ship Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\components\HardpointComponent.h">
+      <Filter>Headers\Components\Ship Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fx\Shaders.h">
+      <Filter>Headers\fx</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utilities\LargeShipUtils.h">
+      <Filter>Headers\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="src\systems\HangarSystem.h">
+      <Filter>Headers\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="src\components\BolasComponent.h">
+      <Filter>Headers\Components\Weapon Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utilities\WeaponUtils.h">
+      <Filter>Headers\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\flecs.h">
+      <Filter>Headers\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\SystemsHeader.h">
+      <Filter>Headers\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\systems\ai_systems\AITypes.h">
+      <Filter>Headers\Systems\AI_Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="src\components\ThrustComponent.h">
+      <Filter>Headers\Components\Ship Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\systems\ThrustSystem.h">
+      <Filter>Headers\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\Sector.h">
+      <Filter>Headers\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\Dialogue.h">
+      <Filter>Headers\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utilities\DialogueEffects.h">
+      <Filter>Headers\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\AudioDriver.h">
+      <Filter>Headers\Core\Audio</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\AudioBuffer.h">
+      <Filter>Headers\Core\Audio</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\AudioSource.h">
+      <Filter>Headers\Core\Audio</Filter>
+    </ClInclude>
+    <ClInclude Include="src\systems\ai_systems\ObstacleAI.h">
+      <Filter>Headers\Systems\AI_Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gui\GuiDialogueMenu.h">
+      <Filter>Headers\Gui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fx\BeamSceneNode.h">
+      <Filter>Headers\fx</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utilities\ShipInstance.h">
+      <Filter>Headers\Utilities\instances</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utilities\ShipUpgrades.h">
+      <Filter>Headers\Utilities\instances</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gui\GuiLoadoutMenu.h">
+      <Filter>Headers\Gui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gui\LoadoutTab.h">
+      <Filter>Headers\Gui\LoadoutTabs</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gui\WingTab.h">
+      <Filter>Headers\Gui\LoadoutTabs</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gui\ShipTab.h">
+      <Filter>Headers\Gui\LoadoutTabs</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gui\WeaponTab.h">
+      <Filter>Headers\Gui\LoadoutTabs</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gui\CarrierTab.h">
+      <Filter>Headers\Gui\LoadoutTabs</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gui\GuiFabMenu.h">
+      <Filter>Headers\Gui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gui\FabMenuTab.h">
+      <Filter>Headers\Gui\FabMenuTabs</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gui\ShipBuildTab.h">
+      <Filter>Headers\Gui\FabMenuTabs</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gui\WeaponBuildTab.h">
+      <Filter>Headers\Gui\FabMenuTabs</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gui\UpgradeTab.h">
+      <Filter>Headers\Gui\FabMenuTabs</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gui\CarrierUpgradeTab.h">
+      <Filter>Headers\Gui\FabMenuTabs</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utilities\WeaponUpgrades.h">
+      <Filter>Headers\Utilities\instances</Filter>
+    </ClInclude>
+    <ClInclude Include="src\components\TurretHardpointComponent.h">
+      <Filter>Headers\Components\Ship Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\components\StatTrackerComponent.h">
+      <Filter>Headers\Components\Ship Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gui\GuiMessHallMenu.h">
+      <Filter>Headers\Gui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gui\SettingsTab.h">
+      <Filter>Headers\Gui\SettingsTabs</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gui\VideoTab.h">
+      <Filter>Headers\Gui\SettingsTabs</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gui\KeybindTab.h">
+      <Filter>Headers\Gui\SettingsTabs</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gui\GuiLaunchMenu.h">
+      <Filter>Headers\Gui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utilities\CarrierUpgrades.h">
+      <Filter>Headers\Utilities\instances</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gui\GuiOptionsMenu.h">
+      <Filter>Headers\Gui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gui\OptionsTab.h">
+      <Filter>Headers\Gui\OptionsTabs</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gui\SaveGameTab.h">
+      <Filter>Headers\Gui\OptionsTabs</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gui\LoadGameTab.h">
+      <Filter>Headers\Gui\OptionsTabs</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gui\GuiCreditsMenu.h">
+      <Filter>Headers\Gui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gui\GameTab.h">
+      <Filter>Headers\Gui\SettingsTabs</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="src\utilities\bitpacker.hpp">
+      <Filter>Headers\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fx\FadeInParticleAffector.h">
+      <Filter>Headers\fx</Filter>
+    </ClInclude>
+    <ClInclude Include="src\components\SensorCallbackComponent.h">
+      <Filter>Headers\Components\Basic Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\Scenario.h">
+      <Filter>Headers\Core\Scenarios</Filter>
+    </ClInclude>
+    <ClInclude Include="src\components\StationModuleComponent.h">
+      <Filter>Headers\Components\Basic Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utilities\StationModuleUtils.h">
+      <Filter>Headers\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="src\systems\CleanupSystems.h">
+      <Filter>Headers\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gui\hud\HUDPopup.h">
+      <Filter>Headers\Gui\HUD</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fx\NodeAnimators.h">
+      <Filter>Headers\fx</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\Objective.h">
+      <Filter>Headers\Core\Scenarios</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gui\hud\HUDComms.h">
+      <Filter>Headers\Gui\HUD</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fx\GeometryCreators.h">
+      <Filter>Headers\fx</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gui\hud\HUDFillBar.h">
+      <Filter>Headers\Gui\HUD</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\RandomGeneration.h">
+      <Filter>Headers\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\components\PowerComponent.h">
+      <Filter>Headers\Components\Basic Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gui\hud\HUDLargePopup.h">
+      <Filter>Headers\Gui\HUD</Filter>
+    </ClInclude>
+    <ClInclude Include="src\components\StatusEffectComponent.h">
+      <Filter>Headers\Components\Basic Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\systems\StatusEffectSystem.h">
+      <Filter>Headers\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fx\BaedsLightManager.h">
+      <Filter>Headers\fx</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\MapRunner.h">
+      <Filter>Headers\Core\Scenarios</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\ScenarioEnums.h">
+      <Filter>Headers\Core\Scenarios</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utilities\MissionUtils.h">
+      <Filter>Headers\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utilities\TurretUtils.h">
+      <Filter>Headers\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utilities\StatusEffects.h">
+      <Filter>Headers\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utilities\Archetypes.h">
+      <Filter>Headers\Utilities\instances</Filter>
+    </ClInclude>
+    <ClInclude Include="src\systems\NetworkingSystem.h">
+      <Filter>Headers\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\CrashLogger.h">
+      <Filter>Headers\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gui\hud\HUDHazard.h">
+      <Filter>Headers\Gui\HUD</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gui\GuiMultiplayerMenu.h">
+      <Filter>Headers\Gui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fx\MotionTrailSceneNode.h">
+      <Filter>Headers\fx</Filter>
+    </ClInclude>
+    <ClInclude Include="src\components\NetworkingComponent.h">
+      <Filter>Headers\Components\Basic Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\systems\TimeKeepingSystem.h">
+      <Filter>Headers\Systems</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Sources">
+      <UniqueIdentifier>{4a053bb7-c369-4508-94ab-14589a01ff9e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers">
+      <UniqueIdentifier>{28c25cbb-b4ce-4a9d-a28b-15cce6994ee2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\Components">
+      <UniqueIdentifier>{b922db02-18b8-43f1-a591-4ae83ae8e8c0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources\Systems">
+      <UniqueIdentifier>{e89721e2-e635-472e-8451-5e473a110a83}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\Systems">
+      <UniqueIdentifier>{a96e59bd-8c03-4eb3-8fbf-c35f1e21daab}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\Core">
+      <UniqueIdentifier>{5c861071-c955-453c-b056-4a7df409ae94}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources\Core">
+      <UniqueIdentifier>{03ce8f02-1238-4568-aa33-76d1d29a6aa2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources\Systems\AI_Systems">
+      <UniqueIdentifier>{293981fc-faf7-4b89-9e26-f29f51a7d906}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\Systems\AI_Systems">
+      <UniqueIdentifier>{7bc3cd78-7fa9-4ba1-8941-8e79be93566f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\Utilities">
+      <UniqueIdentifier>{7deef0a0-b48d-4be8-8c04-a1eea64fed90}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources\Utilities">
+      <UniqueIdentifier>{7edb8844-beca-4f01-aebe-43729340d4d3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\Gui">
+      <UniqueIdentifier>{a721ea7a-4042-462d-91c2-0ffc8039dd4f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources\Gui">
+      <UniqueIdentifier>{a309bdf4-382c-464c-ab31-f0dd8a6a5db4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\Gui\HUD">
+      <UniqueIdentifier>{877ec417-aa99-46b9-9242-dc176660e140}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources\Gui\HUD">
+      <UniqueIdentifier>{aa77fe6a-7ebd-428a-ac25-cdce8ed88379}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources\Components">
+      <UniqueIdentifier>{13738754-442e-423d-96c3-6fc200ce8b86}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\Components\Weapon Components">
+      <UniqueIdentifier>{fe4cbde4-5ea3-4e5c-a940-3ca3610efd4f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\Components\Basic Components">
+      <UniqueIdentifier>{c096e14b-0749-4336-a970-e3eb0dd66c3c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\Components\Player Components">
+      <UniqueIdentifier>{5c4a17a4-0fea-4c3a-9834-d547c16129bb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\Components\Ship Components">
+      <UniqueIdentifier>{51853e36-36ad-4933-91a1-dba052db2787}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources">
+      <UniqueIdentifier>{46e2d65b-30b4-481a-a073-b7d335666c92}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\fx">
+      <UniqueIdentifier>{1e67876d-ecd2-40ad-be7c-747797faa766}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\Core\Audio">
+      <UniqueIdentifier>{5a4942a3-a094-475e-9d8b-b22d9d3708d9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources\Core\Audio">
+      <UniqueIdentifier>{d777d4fd-1027-415d-8236-88e460494ac0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\Utilities\instances">
+      <UniqueIdentifier>{7bfc11fb-8690-47c8-b622-e54d0993c706}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources\Utilities\instances">
+      <UniqueIdentifier>{85d86c26-8964-4826-8b27-2c09417723cd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources\Gui\LoadoutTabs">
+      <UniqueIdentifier>{52055d37-4501-4a5c-9322-a2fbe8a14b9a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\Gui\LoadoutTabs">
+      <UniqueIdentifier>{a6392475-3552-465b-9510-295c9bb044c8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\Gui\FabMenuTabs">
+      <UniqueIdentifier>{03b7bce2-c26e-4e16-990c-c2ccdac683c5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources\Gui\FabMenuTabs">
+      <UniqueIdentifier>{4858528b-26f2-4dd5-b9e2-f0be400cdf94}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\Gui\SettingsTabs">
+      <UniqueIdentifier>{ef31a475-1ed0-4b16-aaaf-c8ca8b69cb1c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources\Gui\SettingsTabs">
+      <UniqueIdentifier>{a009e9cb-e998-43a4-b489-30c0c33a584a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\Gui\OptionsTabs">
+      <UniqueIdentifier>{33efcf03-5884-48d6-a70c-4425f58293db}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources\Gui\OptionsTabs">
+      <UniqueIdentifier>{aeef90e3-8af0-4af0-b863-25a46ff9cd93}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\Core\Scenarios">
+      <UniqueIdentifier>{317e0aa0-c71d-4634-8244-68b45d392598}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources\Core\Scenario">
+      <UniqueIdentifier>{cba25905-a447-42cc-b66a-6b4bdf986404}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources\fx">
+      <UniqueIdentifier>{41ffd331-7cb1-485c-b77e-d4241d5d7549}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="FlightSim.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="icon.ico" />
+  </ItemGroup>
+</Project>

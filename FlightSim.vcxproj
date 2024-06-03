@@ -1,0 +1,535 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release-Demo|Win32">
+      <Configuration>Release-Demo</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release-Demo|x64">
+      <Configuration>Release-Demo</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>16.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{3b30d19d-c7a3-4ab6-b12b-87225cf028e1}</ProjectGuid>
+    <RootNamespace>FlightSim</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release-Demo|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release-Demo|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release-Demo|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release-Demo|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release-Demo|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+    <LibraryPath>$(LibraryPath)</LibraryPath>
+    <TargetName>Extermination Shock</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+    <TargetName>Extermination Shock</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release-Demo|x64'">
+    <LinkIncremental>false</LinkIncremental>
+    <TargetName>Extermination Shock</TargetName>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>irrlicht-1.8.4\include;lib/steam/steam/</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <LanguageStandard_C>Default</LanguageStandard_C>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(SolutionDir)\lib\steam;irrlicht-1.8.4/lib/Win32-visualstudio
+;%(AdditionalLibraryDirectories);${SolutionDir}/lib/irrlicht/lib;lib\irrlicht\lib\;lib/steam/</AdditionalLibraryDirectories>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <AdditionalIncludeDirectories>;lib/steam/steam/</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(SolutionDir)\lib\steam;;lib/steam/</AdditionalLibraryDirectories>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release-Demo|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_DEMOVERSION;%(PreprocessorDefinitions);_DEMOVERSION</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <AdditionalIncludeDirectories>;lib/steam/steam/</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(SolutionDir)\lib\steam;;lib/steam/</AdditionalLibraryDirectories>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>bulletlibs\include;src\components;src\gui;src\systems;src\utilities;src\core;%(AdditionalIncludeDirectories);$(SolutionDir)src\systems\ai_systems;$(SolutionDir)\src\gui\hud;$(SolutionDir)/src/fx;$(SolutionDir)\lib\openal\include;$(SolutionDir)\lib\vorbis\include;S(SolutionDir)\lib\irrlicht\include;lib\irrlicht\include;lib\bullet\src;lib\bullet\Extras;lib/steam/steam/</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <ExceptionHandling>Async</ExceptionHandling>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <LanguageStandard_C>Default</LanguageStandard_C>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(SolutionDir)\lib\steam;$(SolutionDir)\lib\irrlicht\lib\Win64-visualStudio;$(SolutionDir)\lib\bullet\lib\Debug;$(SolutionDir)\lib\irrklang\lib\Winx64-visualStudio;$(SolutionDir)\lib\openal\lib;$(SolutionDir)\lib\vorbis\lib;${SolutionDir}/lib/irrlicht/lib;lib\irrlicht\lib\;lib/steam/</AdditionalLibraryDirectories>
+      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>lib\irrklang\include;lib\irrlicht\include;lib\bullet\src;src\components;src\gui;src\systems;src\utilities;src\core;%(AdditionalIncludeDirectories);$(SolutionDir)src\systems\ai_systems;$(SolutionDir)\src\gui\hud;lib\bullet\Extras;src\extras;$(SolutionDir)/src/fx;$(SolutionDir)\lib\openal\include;$(SolutionDir)\lib\vorbis\include;lib/steam/steam/</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <ExceptionHandling>Async</ExceptionHandling>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(SolutionDir)\lib\steam;lib\irrklang\lib\Winx64-visualStudio;lib\irrlicht\lib;lib\bullet\lib\Release;$(SolutionDir)\lib\openal\lib;$(SolutionDir)\lib\vorbis\lib;lib/steam/</AdditionalLibraryDirectories>
+    </Link>
+    <FxCompile>
+      <ShaderType>Effect</ShaderType>
+    </FxCompile>
+    <FxCompile>
+      <ShaderModel>2.0</ShaderModel>
+    </FxCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release-Demo|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions);_DEMOVERSION</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>lib\irrklang\include;lib\irrlicht\include;lib\bullet\src;src\components;src\gui;src\systems;src\utilities;src\core;%(AdditionalIncludeDirectories);$(SolutionDir)src\systems\ai_systems;$(SolutionDir)\src\gui\hud;lib\bullet\Extras;src\extras;$(SolutionDir)/src/fx;$(SolutionDir)\lib\openal\include;$(SolutionDir)\lib\vorbis\include;lib/steam/steam/</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <ExceptionHandling>Async</ExceptionHandling>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(SolutionDir)\lib\steam;lib\irrklang\lib\Winx64-visualStudio;lib\irrlicht\lib;lib\bullet\lib\Release;$(SolutionDir)\lib\openal\lib;$(SolutionDir)\lib\vorbis\lib;lib/steam/</AdditionalLibraryDirectories>
+    </Link>
+    <FxCompile>
+      <ShaderType>Effect</ShaderType>
+    </FxCompile>
+    <FxCompile>
+      <ShaderModel>2.0</ShaderModel>
+    </FxCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="src\systems\TimeKeepingSystem.cpp" />
+    <ClCompile Include="src\components\InputComponent.cpp" />
+    <ClCompile Include="src\components\SensorCallbackComponent.cpp" />
+    <ClCompile Include="src\components\StationModuleComponent.cpp" />
+    <ClCompile Include="src\core\AudioBuffer.cpp" />
+    <ClCompile Include="src\core\AudioDriver.cpp" />
+    <ClCompile Include="src\core\AudioSource.cpp" />
+    <ClCompile Include="src\core\Campaign.cpp" />
+    <ClCompile Include="src\core\CrashLogger.cpp" />
+    <ClCompile Include="src\core\Dialogue.cpp" />
+    <ClCompile Include="src\core\flecs.c">
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsC</CompileAs>
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release-Demo|Win32'">CompileAsC</CompileAs>
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">CompileAsC</CompileAs>
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release-Demo|x64'">CompileAsC</CompileAs>
+      <SDLCheck Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</SDLCheck>
+      <SDLCheck Condition="'$(Configuration)|$(Platform)'=='Release-Demo|Win32'">false</SDLCheck>
+      <SDLCheck Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</SDLCheck>
+      <SDLCheck Condition="'$(Configuration)|$(Platform)'=='Release-Demo|x64'">false</SDLCheck>
+      <SDLCheck Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</SDLCheck>
+      <SDLCheck Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</SDLCheck>
+    </ClCompile>
+    <ClCompile Include="src\core\GameAssets.cpp" />
+    <ClCompile Include="src\core\MapRunner.cpp" />
+    <ClCompile Include="src\core\Networking.cpp" />
+    <ClCompile Include="src\core\Objective.cpp" />
+    <ClCompile Include="src\core\RandomGeneration.cpp" />
+    <ClCompile Include="src\core\Scenario.cpp" />
+    <ClCompile Include="src\core\Sector.cpp" />
+    <ClCompile Include="src\fx\BaedsLightManager.cpp" />
+    <ClCompile Include="src\fx\BeamSceneNode.cpp" />
+    <ClCompile Include="src\fx\FadeInParticleAffector.cpp" />
+    <ClCompile Include="src\fx\GeometryCreators.cpp" />
+    <ClCompile Include="src\fx\MotionTrailSceneNode.cpp" />
+    <ClCompile Include="src\fx\NodeAnimators.cpp" />
+    <ClCompile Include="src\fx\Shaders.cpp" />
+    <ClCompile Include="src\gui\CarrierTab.cpp" />
+    <ClCompile Include="src\gui\CarrierUpgradeTab.cpp" />
+    <ClCompile Include="src\gui\FabMenuTab.cpp" />
+    <ClCompile Include="src\gui\GameTab.cpp" />
+    <ClCompile Include="src\gui\GuiCampaignMenu.cpp" />
+    <ClCompile Include="src\gui\GuiCreditsMenu.cpp" />
+    <ClCompile Include="src\gui\GuiDeathMenu.cpp" />
+    <ClCompile Include="src\gui\GuiDialog.cpp" />
+    <ClCompile Include="src\gui\GuiDialogueMenu.cpp" />
+    <ClCompile Include="src\gui\GuiFabMenu.cpp" />
+    <ClCompile Include="src\gui\GuiLaunchMenu.cpp" />
+    <ClCompile Include="src\gui\GuiLoadoutMenu.cpp" />
+    <ClCompile Include="src\gui\GuiLootMenu.cpp" />
+    <ClCompile Include="src\gui\GuiMessHallMenu.cpp" />
+    <ClCompile Include="src\gui\GuiMultiplayerMenu.cpp" />
+    <ClCompile Include="src\gui\GuiOptionsMenu.cpp" />
+    <ClCompile Include="src\gui\GuiPauseMenu.cpp" />
+    <ClCompile Include="src\gui\GuiMainMenu.cpp" />
+    <ClCompile Include="src\core\GuiController.cpp" />
+    <ClCompile Include="src\core\GameStateController.cpp" />
+    <ClCompile Include="src\gui\GuiSettingsMenu.cpp" />
+    <ClCompile Include="src\gui\hud\HUDActiveSelection.cpp" />
+    <ClCompile Include="src\gui\hud\HUDComms.cpp" />
+    <ClCompile Include="src\gui\hud\HUDContact.cpp" />
+    <ClCompile Include="src\gui\hud\HUDFillBar.cpp" />
+    <ClCompile Include="src\gui\hud\HUDHazard.cpp" />
+    <ClCompile Include="src\gui\hud\HUDHealthBar.cpp" />
+    <ClCompile Include="src\gui\hud\HUDLargePopup.cpp" />
+    <ClCompile Include="src\gui\hud\HUDPopup.cpp" />
+    <ClCompile Include="src\gui\KeybindTab.cpp" />
+    <ClCompile Include="src\gui\LoadGameTab.cpp" />
+    <ClCompile Include="src\gui\LoadoutTab.cpp" />
+    <ClCompile Include="src\gui\OptionsTab.cpp" />
+    <ClCompile Include="src\gui\SaveGameTab.cpp" />
+    <ClCompile Include="src\gui\SettingsTab.cpp" />
+    <ClCompile Include="src\gui\ShipBuildTab.cpp" />
+    <ClCompile Include="src\gui\ShipTab.cpp" />
+    <ClCompile Include="src\gui\UpgradeTab.cpp" />
+    <ClCompile Include="src\gui\VideoTab.cpp" />
+    <ClCompile Include="src\gui\WeaponBuildTab.cpp" />
+    <ClCompile Include="src\gui\WeaponTab.cpp" />
+    <ClCompile Include="src\gui\WingTab.cpp" />
+    <ClCompile Include="src\systems\AIUpdateSystem.cpp" />
+    <ClCompile Include="src\systems\ai_systems\AITypes.cpp" />
+    <ClCompile Include="src\systems\ai_systems\FrigateAI.cpp" />
+    <ClCompile Include="src\systems\ai_systems\ObstacleAI.cpp" />
+    <ClCompile Include="src\systems\HangarSystem.cpp" />
+    <ClCompile Include="src\systems\CollisionCheckingSystem.cpp" />
+    <ClCompile Include="src\core\GameController.cpp" />
+    <ClCompile Include="src\systems\DamageSystem.cpp" />
+    <ClCompile Include="src\systems\HealthAndShieldSystems.cpp" />
+    <ClCompile Include="src\systems\IrrlichtRigidBodyPositionSystem.cpp" />
+    <ClCompile Include="src\core\main.cpp" />
+    <ClCompile Include="src\systems\NetworkingSystem.cpp" />
+    <ClCompile Include="src\systems\PlayerUpdateSystem.cpp" />
+    <ClCompile Include="src\systems\ProjectileSystem.cpp" />
+    <ClCompile Include="src\systems\SensorUpdateSystem.cpp" />
+    <ClCompile Include="src\systems\ShipControlSystem.cpp" />
+    <ClCompile Include="src\systems\ShipUpdateSystem.cpp" />
+    <ClCompile Include="src\systems\SoundSystem.cpp" />
+    <ClCompile Include="src\systems\CleanupSystems.cpp" />
+    <ClCompile Include="src\systems\StatusEffectSystem.cpp" />
+    <ClCompile Include="src\systems\ThrustSystem.cpp" />
+    <ClCompile Include="src\systems\WeaponFiringSystem.cpp" />
+    <ClCompile Include="src\utilities\AttributeReaders.cpp" />
+    <ClCompile Include="src\utilities\btUtils.cpp" />
+    <ClCompile Include="src\utilities\CarrierUpgrades.cpp" />
+    <ClCompile Include="src\utilities\LargeShipUtils.cpp" />
+    <ClCompile Include="src\utilities\Config.cpp" />
+    <ClCompile Include="src\utilities\DialogueEffects.cpp" />
+    <ClCompile Include="src\utilities\GvReader.cpp" />
+    <ClCompile Include="src\utilities\GameFunctions.cpp" />
+    <ClCompile Include="src\utilities\IrrlichtUtils.cpp" />
+    <ClCompile Include="src\utilities\MissionUtils.cpp" />
+    <ClCompile Include="src\utilities\ObstacleUtils.cpp" />
+    <ClCompile Include="src\utilities\ProjectileUtils.cpp" />
+    <ClCompile Include="src\utilities\ShipMovementUtils.cpp" />
+    <ClCompile Include="src\utilities\ShipUpgrades.cpp" />
+    <ClCompile Include="src\utilities\ShipUtils.cpp" />
+    <ClCompile Include="src\utilities\StatusEffects.cpp" />
+    <ClCompile Include="src\utilities\StationModuleUtils.cpp" />
+    <ClCompile Include="src\utilities\TurretUtils.cpp" />
+    <ClCompile Include="src\utilities\WeaponUpgrades.cpp" />
+    <ClCompile Include="src\utilities\WeaponUtils.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="src\systems\TimeKeepingSystem.h" />
+    <ClInclude Include="src\components\BolasComponent.h" />
+    <ClInclude Include="src\components\BulletGhostComponent.h" />
+    <ClInclude Include="src\components\HangarComponent.h" />
+    <ClInclude Include="src\components\HarpoonComponent.h" />
+    <ClInclude Include="src\components\MissileComponent.h" />
+    <ClInclude Include="src\components\NetworkingComponent.h" />
+    <ClInclude Include="src\components\PowerComponent.h" />
+    <ClInclude Include="src\components\SensorCallbackComponent.h" />
+    <ClInclude Include="src\components\StationModuleComponent.h" />
+    <ClInclude Include="src\components\StatTrackerComponent.h" />
+    <ClInclude Include="src\components\StatusEffectComponent.h" />
+    <ClInclude Include="src\components\ThrustComponent.h" />
+    <ClInclude Include="src\components\ObstacleComponent.h" />
+    <ClInclude Include="src\components\SensorComponent.h" />
+    <ClInclude Include="src\components\ShipParticleComponent.h" />
+    <ClInclude Include="src\components\HardpointComponent.h" />
+    <ClInclude Include="src\components\TurretHardpointComponent.h" />
+    <ClInclude Include="src\core\AudioBuffer.h" />
+    <ClInclude Include="src\core\AudioDriver.h" />
+    <ClInclude Include="src\core\AudioSource.h" />
+    <ClInclude Include="src\core\Campaign.h" />
+    <ClInclude Include="src\core\CrashLogger.h" />
+    <ClInclude Include="src\core\Dialogue.h" />
+    <ClInclude Include="src\core\flecs.h" />
+    <ClInclude Include="src\core\MapRunner.h" />
+    <ClInclude Include="src\core\Objective.h" />
+    <ClInclude Include="src\core\RandomGeneration.h" />
+    <ClInclude Include="src\core\ScenarioEnums.h" />
+    <ClInclude Include="src\core\Sector.h" />
+    <ClInclude Include="src\core\SystemsHeader.h" />
+    <ClInclude Include="src\fx\BaedsLightManager.h" />
+    <ClInclude Include="src\fx\BeamSceneNode.h" />
+    <ClInclude Include="src\fx\FadeInParticleAffector.h" />
+    <ClInclude Include="src\fx\GeometryCreators.h" />
+    <ClInclude Include="src\fx\MotionTrailSceneNode.h" />
+    <ClInclude Include="src\fx\NodeAnimators.h" />
+    <ClInclude Include="src\fx\Shaders.h" />
+    <ClInclude Include="src\gui\CarrierTab.h" />
+    <ClInclude Include="src\gui\CarrierUpgradeTab.h" />
+    <ClInclude Include="src\gui\FabMenuTab.h" />
+    <ClInclude Include="src\gui\GameTab.h" />
+    <ClInclude Include="src\gui\GuiCampaignMenu.h" />
+    <ClInclude Include="src\gui\GuiCreditsMenu.h" />
+    <ClInclude Include="src\gui\GuiDeathMenu.h" />
+    <ClInclude Include="src\gui\GuiDialogueMenu.h" />
+    <ClInclude Include="src\gui\GuiFabMenu.h" />
+    <ClInclude Include="src\gui\GuiLaunchMenu.h" />
+    <ClInclude Include="src\gui\GuiLootMenu.h" />
+    <ClInclude Include="src\gui\GuiMessHallMenu.h" />
+    <ClInclude Include="src\gui\GuiMultiplayerMenu.h" />
+    <ClInclude Include="src\gui\GuiOptionsMenu.h" />
+    <ClInclude Include="src\gui\GuiSettingsMenu.h" />
+    <ClInclude Include="src\gui\hud\HUDActiveSelection.h" />
+    <ClInclude Include="src\gui\hud\HUDComms.h" />
+    <ClInclude Include="src\gui\hud\HUDContact.h" />
+    <ClInclude Include="src\gui\hud\HUDElement.h" />
+    <ClInclude Include="src\components\FactionComponent.h" />
+    <ClInclude Include="src\core\Networking.h" />
+    <ClInclude Include="src\components\AIComponent.h" />
+    <ClInclude Include="src\gui\hud\HUDFillBar.h" />
+    <ClInclude Include="src\gui\hud\HUDHazard.h" />
+    <ClInclude Include="src\gui\hud\HUDHeader.h" />
+    <ClInclude Include="src\gui\hud\HUDHealthBar.h" />
+    <ClInclude Include="src\gui\GuiLoadoutMenu.h" />
+    <ClInclude Include="src\gui\hud\HUDLargePopup.h" />
+    <ClInclude Include="src\gui\hud\HUDPopup.h" />
+    <ClInclude Include="src\gui\KeybindTab.h" />
+    <ClInclude Include="src\gui\LoadGameTab.h" />
+    <ClInclude Include="src\gui\LoadoutTab.h" />
+    <ClInclude Include="src\gui\OptionsTab.h" />
+    <ClInclude Include="src\gui\SaveGameTab.h" />
+    <ClInclude Include="src\gui\SettingsTab.h" />
+    <ClInclude Include="src\gui\ShipBuildTab.h" />
+    <ClInclude Include="src\gui\ShipTab.h" />
+    <ClInclude Include="src\gui\UpgradeTab.h" />
+    <ClInclude Include="src\gui\VideoTab.h" />
+    <ClInclude Include="src\gui\WeaponBuildTab.h" />
+    <ClInclude Include="src\gui\WeaponTab.h" />
+    <ClInclude Include="src\gui\WingTab.h" />
+    <ClInclude Include="src\systems\AIUpdateSystem.h" />
+    <ClInclude Include="src\gui\GuiPauseMenu.h" />
+    <ClInclude Include="src\gui\GuiMainMenu.h" />
+    <ClInclude Include="src\gui\GuiDialog.h" />
+    <ClInclude Include="src\core\GuiController.h" />
+    <ClInclude Include="src\core\GameStateController.h" />
+    <ClInclude Include="src\core\BaseHeader.h" />
+    <ClInclude Include="src\components\BulletRigidBodyComponent.h" />
+    <ClInclude Include="src\gui\MenuData.h" />
+    <ClInclude Include="src\systems\ai_systems\AITypes.h" />
+    <ClInclude Include="src\systems\ai_systems\ObstacleAI.h" />
+    <ClInclude Include="src\systems\HangarSystem.h" />
+    <ClInclude Include="src\systems\CollisionCheckingSystem.h" />
+    <ClInclude Include="src\core\GameController.h" />
+    <ClInclude Include="src\components\HealthComponent.h" />
+    <ClInclude Include="src\systems\DamageSystem.h" />
+    <ClInclude Include="src\systems\HealthAndShieldSystems.h" />
+    <ClInclude Include="src\components\InputComponent.h" />
+    <ClInclude Include="src\components\IrrlichtComponent.h" />
+    <ClInclude Include="src\systems\IrrlichtRigidBodyPositionSystem.h" />
+    <ClInclude Include="src\components\PlayerComponent.h" />
+    <ClInclude Include="src\systems\NetworkingSystem.h" />
+    <ClInclude Include="src\systems\PlayerUpdateSystem.h" />
+    <ClInclude Include="src\systems\ProjectileSystem.h" />
+    <ClInclude Include="src\components\ShipComponent.h" />
+    <ClInclude Include="src\systems\SensorUpdateSystem.h" />
+    <ClInclude Include="src\systems\ShipControlSystem.h" />
+    <ClInclude Include="src\systems\ShipUpdateSystem.h" />
+    <ClInclude Include="src\systems\SoundSystem.h" />
+    <ClInclude Include="src\systems\CleanupSystems.h" />
+    <ClInclude Include="src\systems\StatusEffectSystem.h" />
+    <ClInclude Include="src\systems\ThrustSystem.h" />
+    <ClInclude Include="src\systems\WeaponFiringSystem.h" />
+    <ClInclude Include="src\components\WeaponInfoComponent.h" />
+    <ClInclude Include="src\utilities\Archetypes.h" />
+    <ClInclude Include="src\utilities\AttributeReaders.h" />
+    <ClInclude Include="src\utilities\bitpacker.hpp" />
+    <ClInclude Include="src\utilities\btUtils.h" />
+    <ClInclude Include="src\utilities\CarrierUpgrades.h" />
+    <ClInclude Include="src\utilities\LargeShipUtils.h" />
+    <ClInclude Include="src\utilities\Config.h" />
+    <ClInclude Include="src\utilities\DialogueEffects.h" />
+    <ClInclude Include="src\utilities\GvReader.h" />
+    <ClInclude Include="src\utilities\GameAssets.h" />
+    <ClInclude Include="src\utilities\GameFunctions.h" />
+    <ClInclude Include="src\utilities\IrrlichtUtils.h" />
+    <ClInclude Include="src\utilities\LoadoutData.h" />
+    <ClInclude Include="src\utilities\MissionUtils.h" />
+    <ClInclude Include="src\utilities\ObstacleUtils.h" />
+    <ClInclude Include="src\utilities\ProjectileUtils.h" />
+    <ClInclude Include="src\core\Scenario.h" />
+    <ClInclude Include="src\utilities\ShipUpgrades.h" />
+    <ClInclude Include="src\utilities\ShipInstance.h" />
+    <ClInclude Include="src\utilities\ShipMovementUtils.h" />
+    <ClInclude Include="src\utilities\ShipUtils.h" />
+    <ClInclude Include="src\utilities\StationModuleUtils.h" />
+    <ClInclude Include="src\utilities\StatusEffects.h" />
+    <ClInclude Include="src\utilities\TurretUtils.h" />
+    <ClInclude Include="src\utilities\WeaponUpgrades.h" />
+    <ClInclude Include="src\utilities\WeaponUtils.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="FlightSim.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="icon.ico" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

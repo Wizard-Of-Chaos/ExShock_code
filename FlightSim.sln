@@ -1,0 +1,81 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.8.34330.188
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FlightSim", "FlightSim.vcxproj", "{3B30D19D-C7A3-4AB6-B12B-87225CF028E1}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "bullet", "bullet", "{061214BC-510F-4821-94BE-E6E2D691C5DD}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		MinSizeRel|x64 = MinSizeRel|x64
+		MinSizeRel|x86 = MinSizeRel|x86
+		Release - Fast FPU|x64 = Release - Fast FPU|x64
+		Release - Fast FPU|x86 = Release - Fast FPU|x86
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+		Release-Demo|x64 = Release-Demo|x64
+		Release-Demo|x86 = Release-Demo|x86
+		RelWithDebInfo|x64 = RelWithDebInfo|x64
+		RelWithDebInfo|x86 = RelWithDebInfo|x86
+		SDL-Debug|x64 = SDL-Debug|x64
+		SDL-Debug|x86 = SDL-Debug|x86
+		Static lib - Debug|x64 = Static lib - Debug|x64
+		Static lib - Debug|x86 = Static lib - Debug|x86
+		Static lib - Release - Fast FPU|x64 = Static lib - Release - Fast FPU|x64
+		Static lib - Release - Fast FPU|x86 = Static lib - Release - Fast FPU|x86
+		Static lib - Release|x64 = Static lib - Release|x64
+		Static lib - Release|x86 = Static lib - Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{3B30D19D-C7A3-4AB6-B12B-87225CF028E1}.Debug|x64.ActiveCfg = Debug|x64
+		{3B30D19D-C7A3-4AB6-B12B-87225CF028E1}.Debug|x64.Build.0 = Debug|x64
+		{3B30D19D-C7A3-4AB6-B12B-87225CF028E1}.Debug|x86.ActiveCfg = Debug|Win32
+		{3B30D19D-C7A3-4AB6-B12B-87225CF028E1}.Debug|x86.Build.0 = Debug|Win32
+		{3B30D19D-C7A3-4AB6-B12B-87225CF028E1}.MinSizeRel|x64.ActiveCfg = Release|x64
+		{3B30D19D-C7A3-4AB6-B12B-87225CF028E1}.MinSizeRel|x64.Build.0 = Release|x64
+		{3B30D19D-C7A3-4AB6-B12B-87225CF028E1}.MinSizeRel|x86.ActiveCfg = Release|Win32
+		{3B30D19D-C7A3-4AB6-B12B-87225CF028E1}.MinSizeRel|x86.Build.0 = Release|Win32
+		{3B30D19D-C7A3-4AB6-B12B-87225CF028E1}.Release - Fast FPU|x64.ActiveCfg = Release|x64
+		{3B30D19D-C7A3-4AB6-B12B-87225CF028E1}.Release - Fast FPU|x64.Build.0 = Release|x64
+		{3B30D19D-C7A3-4AB6-B12B-87225CF028E1}.Release - Fast FPU|x86.ActiveCfg = Release|Win32
+		{3B30D19D-C7A3-4AB6-B12B-87225CF028E1}.Release - Fast FPU|x86.Build.0 = Release|Win32
+		{3B30D19D-C7A3-4AB6-B12B-87225CF028E1}.Release|x64.ActiveCfg = Release|x64
+		{3B30D19D-C7A3-4AB6-B12B-87225CF028E1}.Release|x64.Build.0 = Release|x64
+		{3B30D19D-C7A3-4AB6-B12B-87225CF028E1}.Release|x86.ActiveCfg = Release|Win32
+		{3B30D19D-C7A3-4AB6-B12B-87225CF028E1}.Release|x86.Build.0 = Release|Win32
+		{3B30D19D-C7A3-4AB6-B12B-87225CF028E1}.Release-Demo|x64.ActiveCfg = Release-Demo|x64
+		{3B30D19D-C7A3-4AB6-B12B-87225CF028E1}.Release-Demo|x64.Build.0 = Release-Demo|x64
+		{3B30D19D-C7A3-4AB6-B12B-87225CF028E1}.Release-Demo|x86.ActiveCfg = Release-Demo|Win32
+		{3B30D19D-C7A3-4AB6-B12B-87225CF028E1}.Release-Demo|x86.Build.0 = Release-Demo|Win32
+		{3B30D19D-C7A3-4AB6-B12B-87225CF028E1}.RelWithDebInfo|x64.ActiveCfg = Release|x64
+		{3B30D19D-C7A3-4AB6-B12B-87225CF028E1}.RelWithDebInfo|x64.Build.0 = Release|x64
+		{3B30D19D-C7A3-4AB6-B12B-87225CF028E1}.RelWithDebInfo|x86.ActiveCfg = Release|Win32
+		{3B30D19D-C7A3-4AB6-B12B-87225CF028E1}.RelWithDebInfo|x86.Build.0 = Release|Win32
+		{3B30D19D-C7A3-4AB6-B12B-87225CF028E1}.SDL-Debug|x64.ActiveCfg = Debug|x64
+		{3B30D19D-C7A3-4AB6-B12B-87225CF028E1}.SDL-Debug|x64.Build.0 = Debug|x64
+		{3B30D19D-C7A3-4AB6-B12B-87225CF028E1}.SDL-Debug|x86.ActiveCfg = Debug|Win32
+		{3B30D19D-C7A3-4AB6-B12B-87225CF028E1}.SDL-Debug|x86.Build.0 = Debug|Win32
+		{3B30D19D-C7A3-4AB6-B12B-87225CF028E1}.Static lib - Debug|x64.ActiveCfg = Debug|x64
+		{3B30D19D-C7A3-4AB6-B12B-87225CF028E1}.Static lib - Debug|x64.Build.0 = Debug|x64
+		{3B30D19D-C7A3-4AB6-B12B-87225CF028E1}.Static lib - Debug|x86.ActiveCfg = Debug|Win32
+		{3B30D19D-C7A3-4AB6-B12B-87225CF028E1}.Static lib - Debug|x86.Build.0 = Debug|Win32
+		{3B30D19D-C7A3-4AB6-B12B-87225CF028E1}.Static lib - Release - Fast FPU|x64.ActiveCfg = Release|x64
+		{3B30D19D-C7A3-4AB6-B12B-87225CF028E1}.Static lib - Release - Fast FPU|x64.Build.0 = Release|x64
+		{3B30D19D-C7A3-4AB6-B12B-87225CF028E1}.Static lib - Release - Fast FPU|x86.ActiveCfg = Release|Win32
+		{3B30D19D-C7A3-4AB6-B12B-87225CF028E1}.Static lib - Release - Fast FPU|x86.Build.0 = Release|Win32
+		{3B30D19D-C7A3-4AB6-B12B-87225CF028E1}.Static lib - Release|x64.ActiveCfg = Release|x64
+		{3B30D19D-C7A3-4AB6-B12B-87225CF028E1}.Static lib - Release|x64.Build.0 = Release|x64
+		{3B30D19D-C7A3-4AB6-B12B-87225CF028E1}.Static lib - Release|x86.ActiveCfg = Release|Win32
+		{3B30D19D-C7A3-4AB6-B12B-87225CF028E1}.Static lib - Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {4B5096E2-FAC7-40A3-B164-0181E7ABF112}
+	EndGlobalSection
+EndGlobal
