@@ -38,9 +38,14 @@ void GameStateController::init()
 		guienv->getSkin()->setFont(defaultFont);
 	}
 	IGUIFont* tooltipDefaultFont = assets->getFont("assets/fonts/tooltip.xml");
+	u32 width = driver->getScreenSize().Width;
+	if (width > 2500) {
+		tooltipDefaultFont = assets->getFont("assets/fonts/tooltip_large.xml");
+	}
 	if (tooltipDefaultFont) {
 		guienv->getSkin()->setFont(tooltipDefaultFont, EGDF_TOOLTIP);
 	}
+
 	guienv->getSkin()->setColor(EGDC_BUTTON_TEXT, SColor(245, 200, 200, 200));//SColor(255, 140, 250, 255));
 
 	audioDriver->playMusic("main_menu.ogg");

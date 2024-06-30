@@ -85,7 +85,8 @@ void weaponFiringSystem(flecs::iter it, WeaponInfoComponent* wic, WeaponFiringCo
 				}
 			}
 		}
-		if(gunFired) audioDriver->playGameSound(entityId, wepInfo->fireSound);
+		if(gunFired) 
+			audioDriver->playGameSound(entityId, wepInfo->fireSound);
 
 		if (fire->timeSinceLastShot > wepInfo->firingSpeed)
 		{

@@ -17,6 +17,7 @@
 #include "NetworkingComponent.h"
 #include "Networking.h"
 #include "CrashLogger.h"
+#include "GameStateController.h"
 
 //Convenience functions to swap back and forth between irrlicht and bullet vectors.
 vector3df btVecToIrr(btVector3 vec)
@@ -194,7 +195,7 @@ void destroyObject_real(flecs::entity id, bool finalDelete)
 		}
 	}
 
-	if (id.has<IrrlichtComponent>()) {
+	if (id.has<IrrlichtComponent>() && (!id.has<ShipComponent>() || id.has<HangarComponent>())) {
 		auto irr = id.get_mut<IrrlichtComponent>();
 		if (out)  baedsLogger::log("Node|");
 		if (irr) {
@@ -231,6 +232,19 @@ void destroyObject_real(flecs::entity id, bool finalDelete)
 				gameController->regPopup(ai->AIName, ai->deathLine);
 			}
 		}
+	}
+	if (id.has<NetworkingComponent>()) {
+		auto net = id.get<NetworkingComponent>();
+		destroyNetworkId(id.get<NetworkingComponent>()->networkedId);
+		auto it = gameController->priorityAccumulator.begin();
+		while (it != gameController->priorityAccumulator.end()) {
+			if (it->get()->id == net->networkedId) {
+				it = gameController->priorityAccumulator.erase(it);
+				continue;
+			}
+			++it;
+		}
+		stateController->networkToEntityDict.erase(net->networkedId);
 	}
 
 	if (out) baedsLogger::log("Done.\nDestroying id - ");
@@ -313,9 +327,6 @@ void initializeHealth(flecs::entity id, f32 healthpool)
 	hp.health = healthpool;
 	hp.maxHealth = healthpool;
 	id.set<HealthComponent>(hp);
-	if (!id.has<NetworkingComponent>() && gameController->isNetworked()) {
-		initializeNetworkingComponent(id, 1);
-	}
 }
 void initializeDefaultHealth(flecs::entity objectId)
 {
@@ -583,21 +594,7 @@ void explode(vector3df position, f32 duration, f32 scale, f32 radius, f32 damage
 	light->addAnimator(anim);
 	anim->drop();
 
-
-	/*
-	flecs::entity id = game_world->entity();
-	EffectComponent eff;
-	eff.cb = effectCallbacks.at(EFF_FLAT_EXPLOSION);
-	eff.currentDuration = 0;
-	eff.totalLifetime = duration;
-	eff.node = node;
-	eff.light = light;
-
-	eff.type = EFF_FLAT_EXPLOSION;
-	id.set<EffectComponent>(eff);
-	*/
 	if(force > .1f) explosiveForce(position, radius, damage, force);
-	//return id;
 }
 void implode(vector3df position, f32 duration, f32 scale, f32 radius, f32 damage, f32 force, EXPLOSION_TYPE type)
 {
@@ -625,26 +622,14 @@ void implode(vector3df position, f32 duration, f32 scale, f32 radius, f32 damage
 	anim = getExplosionSphereTextureAnim(type);
 	sphere->addAnimator(anim);
 	anim->drop();
+
 	anim = smgr->createDeleteAnimator((u32)(duration * 1000.f) + 3000);
 	node->addAnimator(anim);
 	sphere->addAnimator(anim);
 	light->addAnimator(anim);
 	anim->drop();
 
-	/*
-	flecs::entity id = game_world->entity();
-	EffectComponent eff;
-	eff.cb = effectCallbacks.at(EFF_FLAT_EXPLOSION);
-	eff.currentDuration = 0;
-	eff.totalLifetime = duration;
-	eff.node = node;
-	eff.light = light;
-
-	eff.type = EFF_FLAT_EXPLOSION;
-	id.set<EffectComponent>(eff);
-	*/
 	if(force > .1f) implosiveForce(position, radius, damage, force);
-	//return id;
 }
 
 void particleEffectBill(std::string which, vector3df position, f32 duration, f32 scale, bool light, SColorf lightCol)
@@ -671,4 +656,13 @@ void decloakEffect(vector3df position, f32 scale)
 {
 	particleEffectBill("assets/effects/decloak/", position, 5.f, scale, true, SColorf(.1f, .9f, .2f));
 	audioDriver->playGameSound(position, "decloak_fighter.ogg", 1.f, 400.f);
+}
+
+flecs::entity getEntityFromNetId(NetworkId id)
+{
+	if (stateController->networkToEntityDict.find(id) == stateController->networkToEntityDict.end()) {
+		baedsLogger::errLog("No entity exists for network id " + std::to_string(id) + "\n");
+		return INVALID_ENTITY;
+	}
+	return stateController->networkToEntityDict.at(id);
 }

@@ -132,7 +132,7 @@ void GuiController::setOkPopup(std::string title, std::string body, std::string 
 	okPopup.button->setText(wstr(button).c_str());
 }
 
-void GuiController::setYesNoPopup(std::string title, std::string body, GuiCallback yesCb, std::string yes, std::string no)
+void GuiController::setYesNoPopup(std::string title, std::string body, GuiCallback yesCb, std::string yes, std::string no, GuiCallback noCb)
 {
 	yesNoPopup.title->setText(wstr(title).c_str());
 	yesNoPopup.body->setText(wstr(body).c_str());
@@ -140,7 +140,16 @@ void GuiController::setYesNoPopup(std::string title, std::string body, GuiCallba
 	yesNoPopup.no->setText(wstr(no).c_str());
 
 	removeCallback(yesNoPopup.yes);
+	removeCallback(yesNoPopup.no);
 	setCallback(yesNoPopup.yes, yesCb, GUI_MENU_MAX);
+	yesNoPopup.hasNoCb = false;
+	if (noCb) {
+		setCallback(yesNoPopup.no, noCb, GUI_MENU_MAX);
+		yesNoPopup.hasNoCb = true;
+	}
+	else {
+		setCallback(yesNoPopup.no, std::bind(&GuiController::hidePopup, this, std::placeholders::_1), GUI_MENU_MAX);
+	}
 }
 
 void GuiController::setKeybindPopup(std::string title, GuiCallback bindCb, std::string body)
@@ -201,7 +210,7 @@ bool GuiController::hidePopup(const SEvent& event)
 
 	if (event.GUIEvent.Caller == yesNoPopup.yes) audioDriver->playMenuSound("menu_proceed.ogg");
 	else audioDriver->playMenuSound("menu_cancel.ogg");
-	std::cout << "hiding popup\n";
+	//std::cout << "hiding popup\n";
 	okPopup.bg->setVisible(false);
 	yesNoPopup.bg->setVisible(false);
 	keybindPopup.bg->setVisible(false);
@@ -291,7 +300,10 @@ bool GuiController::OnEvent(const SEvent& event)
 
 	if (activeDialog && event.EventType == EET_GUI_EVENT) {
 		if (callbacks.find(event.GUIEvent.Caller) != callbacks.end()) {
-			if (event.GUIEvent.EventType == EGET_BUTTON_CLICKED) audioDriver->playMenuSound("menu_click.ogg");
+
+			if (event.GUIEvent.EventType == EGET_BUTTON_CLICKED) 
+				audioDriver->playMenuSound("menu_click.ogg");
+
 			if (event.GUIEvent.EventType == EGET_ELEMENT_HOVERED) {
 				audioDriver->playMenuSound("menu_hover.ogg");
 			}
@@ -307,6 +319,12 @@ bool GuiController::OnEvent(const SEvent& event)
 				if (event.GUIEvent.Caller == yesNoPopup.yes) {
 					hidePopup(event);
 					return callbacks[yesNoPopup.yes].cb(event);
+				}
+				if (event.GUIEvent.Caller == yesNoPopup.no) {
+					hidePopup(event);
+					if (yesNoPopup.hasNoCb)
+						return callbacks[yesNoPopup.no].cb(event);
+					return false;
 				}
 				return hidePopup(event);
 			}

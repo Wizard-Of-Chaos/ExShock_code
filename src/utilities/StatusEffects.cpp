@@ -5,6 +5,7 @@
 #include "HealthComponent.h"
 #include "GameController.h"
 #include "BulletRigidBodyComponent.h"
+#include "GameFunctions.h"
 
 struct DPSEffect : public StatusEffect
 {
@@ -23,6 +24,15 @@ struct DPSEffect : public StatusEffect
 		hp->registerDamageInstance(DamageInstance(from, self, type, dt * damagePerSecond, device->getTimer()->getTime()));
 	}
 };
+
+bool DelayedKillEffect::apply(f32 dt, flecs::entity self)
+{
+	curDuration += dt;
+	if (curDuration >= duration) {
+		destroyObject(self);
+	}
+	return false;
+}
 
 bool StickySpawnerEffect::apply(f32 dt, flecs::entity self)
 {

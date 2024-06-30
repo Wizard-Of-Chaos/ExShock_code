@@ -2,6 +2,7 @@
 #include "GuiController.h"
 #include "GameStateController.h"
 #include "AudioDriver.h"
+#include "GameController.h"
 
 void GuiOptionsMenu::init()
 {
@@ -87,8 +88,12 @@ bool GuiOptionsMenu::onNew(const SEvent& event)
 		guiController->showYesNoPopup();
 		return false;
 	}
-	return onNewConfirm(event);
+	guiController->setYesNoPopup("New Campaign", "Would you like to play the tutorial before entering the campaign? Understanding how to fly is recommended.",
+		std::bind(&GuiOptionsMenu::onTutorialConfirm, this, std::placeholders::_1), "Yes", "No", std::bind(&GuiOptionsMenu::onNewConfirm, this, std::placeholders::_1));
+	guiController->showYesNoPopup();
+	return false;
 }
+
 bool GuiOptionsMenu::onNewConfirm(const SEvent& event)
 {
 	if (event.GUIEvent.EventType != EGET_BUTTON_CLICKED) return true;
@@ -97,8 +102,28 @@ bool GuiOptionsMenu::onNewConfirm(const SEvent& event)
 	stateController->toggleMenuBackdrop(false);
 	guiController->setActiveDialog(GUI_CAMPAIGN_MENU);
 	audioDriver->playMusic(campaign->getSector()->menuMusic);
+	guiController->setDialogueTree(campaign->getCharacterDialogue(L"steven_newgame"));
+	guiController->setEventDialoguePopup();
 	return false;
 }
+
+bool GuiOptionsMenu::onTutorialConfirm(const SEvent& event)
+{
+	if (event.GUIEvent.EventType != EGET_BUTTON_CLICKED) return true;
+	stateController->inCampaign = true;
+	campaign->newCampaign();
+	stateController->toggleMenuBackdrop(false);
+	gameController->tutorial = true;
+	guiController->setActiveDialog(GUI_LOADING_MENU);
+	audioDriver->playMenuSound("menu_confirm.ogg");
+	stateController->setState(GAME_RUNNING);
+	audioDriver->playMusic(campaign->getSector()->combatMusic, 0);
+	audioDriver->setMusicGain(0, 0.f);
+	audioDriver->playMusic(campaign->getSector()->ambientMusic, 1);
+	audioDriver->setMusicGain(1, 1.f);
+	return false;
+}
+
 bool GuiOptionsMenu::onSettings(const SEvent& event)
 {
 	if (event.GUIEvent.EventType != EGET_BUTTON_CLICKED) return true;

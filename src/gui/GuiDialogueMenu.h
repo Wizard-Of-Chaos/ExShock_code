@@ -19,7 +19,7 @@ class GuiDialogueMenu : public GuiDialog
 	private:
 		void m_cleanChoices();
 		void m_setNextNode(std::wstring id);
-		IGUIStaticText* m_addTextToScroll(std::wstring str);
+		IGUIStaticText* m_addTextToScroll(std::wstring spkr, std::wstring str);
 		DialogueNode currentNode;
 		DialogueTree currentTree;
 		MENU_TYPE previousDialog;

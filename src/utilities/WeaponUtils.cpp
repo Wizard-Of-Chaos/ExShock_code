@@ -10,6 +10,7 @@
 #include "IrrlichtComponent.h"
 #include "GameFunctions.h"
 #include "BolasComponent.h"
+#include "PhysShieldComponent.h"
 #include "CrashLogger.h"
 
 const std::unordered_map<std::string, ProjInfo_hitCb> impactCbStrings =
@@ -24,7 +25,8 @@ const std::unordered_map<std::string, ProjInfo_hitCb> impactCbStrings =
 	{"phys_grapple", wepHit_energyGrapple},
 	{"phys_hook", wepHit_physHook},
 	{"phys_slowdown_bang", wepHit_physSlowdownExplosion},
-	{"bfg_explosion", wepHit_bfgExplosion}
+	{"bfg_explosion", wepHit_bfgExplosion},
+	{"phys_shield", wepHit_physShield}
 };
 
 const std::unordered_map<std::string, WepInfo_UpdateCb> updateCbStrings =
@@ -32,7 +34,10 @@ const std::unordered_map<std::string, WepInfo_UpdateCb> updateCbStrings =
 	{"basic", wepUpdate_basic},
 	{"bolas", wepUpdate_bolas},
 	{"railgun", wepUpdate_railgun},
-	{"goron", wepUpdate_goron}
+	{"goron", wepUpdate_goron},
+	{"electron", wepUpdate_electron},
+	{"phys_shield", wepUpdate_physShield},
+	{"alien_health", wepUpdate_alienHealth},
 };
 
 const std::unordered_map<std::string, WepInfo_FireCb> fireCbStrings =
@@ -45,7 +50,10 @@ const std::unordered_map<std::string, WepInfo_FireCb> fireCbStrings =
 	{"railgun", wepFire_railgun},
 	{"laser", wepFire_laser},
 	{"thick_laser", wepFire_thickLaser},
-	{"goron", wepFire_goron}
+	{"goron", wepFire_goron},
+	{"electron", wepFire_electron},
+	{"phys_shield", wepFire_physShield},
+	{"alien_health", wepFire_alienHealth},
 };
 
 
@@ -77,7 +85,7 @@ void wepHit_projDamage(flecs::entity projectile, flecs::entity impacted, btVecto
 	if (impacted.has<HealthComponent>()) {
 		auto hp = impacted.get_mut<HealthComponent>();
 		hp->registerDamageInstance(
-			DamageInstance(projectile.target(flecs::ChildOf), impacted, proj->dmgtype, proj->damage,
+			DamageInstance(projectile.target(flecs::ChildOf), impacted, proj->dmgtype, proj->damage * proj->multiplier,
 				device->getTimer()->getTime(), posLocal));
 	}
 }
@@ -90,7 +98,7 @@ void wepHit_laserDamage(flecs::entity wep, flecs::entity impacted, btVector3 hit
 	if (impacted.has<HealthComponent>()) {
 		auto hp = impacted.get_mut<HealthComponent>();
 		hp->registerDamageInstance(
-			DamageInstance(wep.target(flecs::ChildOf), impacted, wepInfo->dmgtype, wepInfo->damage,
+			DamageInstance(wep.target(flecs::ChildOf), impacted, wepInfo->dmgtype, wepInfo->damage * wepInfo->multiplier,
 				device->getTimer()->getTime()));
 	}
 }
@@ -123,7 +131,7 @@ void wepHit_projKnockback(flecs::entity projectile, flecs::entity impacted, btVe
 void wepHit_impulseBlast(flecs::entity projId, flecs::entity impacted, btVector3 hitPoint)
 {
 	auto proj = projId.get<ProjectileInfoComponent>();
-	explode(btVecToIrr(hitPoint), 1.5f, 9.f, 190.f, proj->damage, 575.f, EXTYPE_TECH);
+	explode(btVecToIrr(hitPoint), 1.5f, 9.f, 190.f, proj->damage * proj->multiplier, 575.f, EXTYPE_TECH);
 }
 
 void wepHit_bfgExplosion(flecs::entity projectile, flecs::entity impacted, btVector3 hitPoint)
@@ -137,7 +145,7 @@ void wepHit_missileExplosion(flecs::entity projId, flecs::entity impacted, btVec
 	auto proj = projId.get<ProjectileInfoComponent>();
 	auto irr = projId.get<IrrlichtComponent>();
 
-	explode(irr->node->getAbsolutePosition(), 1.f, 1.f, 180.f, proj->damage, 200.f);
+	explode(irr->node->getAbsolutePosition(), 1.f, 1.f, 180.f, proj->damage * proj->multiplier, 200.f);
 }
 
 void wepHit_bolas(flecs::entity projId, flecs::entity impacted, btVector3 hitPoint)
@@ -308,6 +316,11 @@ void wepHit_physSlowdownExplosion(flecs::entity projId, flecs::entity impacted, 
 	explode(btVecToIrr(center), 3.f, 35.f, 350.f, 0.f, 0.f, EXTYPE_TECH);
 }
 
+void wepHit_physShield(flecs::entity projId, flecs::entity impacted, btVector3 hitPoint)
+{
+	explode(btVecToIrr(hitPoint), 1.f, 20.f, 300.f, 0.f, 500.f, EXTYPE_TECH);
+}
+
 /////////////////////////////////////////////////////////////////////////////////////////////////
 
 void wepUpdate_basic(WeaponInfoComponent* wep, WeaponFiringComponent* fire, PowerComponent* power, flecs::entity wepEnt, f32 dt)
@@ -337,6 +350,46 @@ void wepUpdate_railgun(WeaponInfoComponent* wep, WeaponFiringComponent* fire, Po
 			gameController->setFire(wepEnt);
 		}
 	}
+}
+
+void wepUpdate_physShield(WeaponInfoComponent* wep, WeaponFiringComponent* fire, PowerComponent* power, flecs::entity wepEnt, f32 dt)
+{
+	auto shieldComp = wepEnt.get_mut<PhysShieldComponent>();
+	if (!shieldComp->shield.is_alive()) {
+		shieldComp->shield = INVALID_ENTITY;
+		return;
+	}
+
+	if (fire->timeSinceLastShot >= wep->lifetime) {
+		destroyObject(shieldComp->shield);
+		shieldComp->shield = INVALID_ENTITY;
+		return;
+	}
+
+	if (!shieldComp->shield.has<BulletRigidBodyComponent>()) {
+		shieldComp->shield = INVALID_ENTITY;
+		return;
+	}
+
+	flecs::entity ship = wepEnt.target(flecs::ChildOf);
+	
+	if (!ship.has<BulletRigidBodyComponent>() || !ship.has<IrrlichtComponent>())
+		return;
+
+	
+	auto shipRBC = ship.get<BulletRigidBodyComponent>();
+	auto shieldRBC = shieldComp->shield.get_mut<BulletRigidBodyComponent>();
+	auto scale = irrVecToBt(ship.get<IrrlichtComponent>()->node->getScale());
+
+	btQuaternion orient = shortestArcQuat(irrVecToBt(vector3df(0, -1, 0)), getRigidBodyForward(shipRBC->rigidBody));
+	btVector3 desiredShieldPos = shipRBC->rigidBody->getCenterOfMassPosition() + (getRigidBodyForward(shipRBC->rigidBody) * 65.f * scale);
+
+	btTransform transform;
+	transform.setIdentity();
+	transform.setRotation(orient);
+	transform.setOrigin(desiredShieldPos);
+	shieldRBC->rigidBody->setWorldTransform(transform);
+	shieldRBC->rigidBody->setLinearVelocity(shipRBC->rigidBody->getLinearVelocity());
 }
 
 void wepUpdate_bolas(WeaponInfoComponent* wepComp, WeaponFiringComponent* fire, PowerComponent* power, flecs::entity wepEnt, f32 dt)
@@ -401,6 +454,49 @@ void wepUpdate_goron(WeaponInfoComponent* wep, WeaponFiringComponent* fire, Powe
 				hp->healthResistances[i] -= .8f;
 				hp->shieldResistances[i] -= .8f;
 			}
+		}
+		fire->hasFired = false;
+	}
+}
+void wepUpdate_electron(WeaponInfoComponent* wep, WeaponFiringComponent* fire, PowerComponent* power, flecs::entity wepEnt, f32 dt)
+{
+	fire->timeSinceLastShot += dt;
+	if (!wep->hasFired) {
+		fire->timeSinceLastShot = wep->firingSpeed;
+		wep->hasFired = true;
+	}
+	if (fire->timeSinceLastShot >= 8.f && fire->hasFired) {
+		flecs::entity ship = wepEnt.target(flecs::ChildOf);
+		if (!ship.is_alive()) {
+			return;
+		}
+		if (ship.has<HardpointComponent>()) {
+			auto hards = ship.get<HardpointComponent>();
+			for (u32 i = 0; i < hards->hardpointCount; ++i) {
+				if (!hards->weapons[i].is_alive()) continue;
+				auto wepInfo = hards->weapons[i].get_mut<WeaponInfoComponent>();
+				wepInfo->multiplier -= .5f;
+			}
+		}
+		fire->hasFired = false;
+	}
+}
+
+void wepUpdate_alienHealth(WeaponInfoComponent* wep, WeaponFiringComponent* fire, PowerComponent* power, flecs::entity wepEnt, f32 dt)
+{
+	fire->timeSinceLastShot += dt;
+	if (!wep->hasFired) {
+		fire->timeSinceLastShot = wep->firingSpeed;
+		wep->hasFired = true;
+	}
+	if (fire->timeSinceLastShot >= 10.f && fire->hasFired) {
+		flecs::entity ship = wepEnt.target(flecs::ChildOf);
+		if (!ship.is_alive()) {
+			return;
+		}
+		if (ship.has<HealthComponent>()) {
+			auto hp = ship.get_mut<HealthComponent>();
+			hp->healthRegen -= wep->damage;
 		}
 		fire->hasFired = false;
 	}

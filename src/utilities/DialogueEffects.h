@@ -33,6 +33,12 @@ void addBFG();
 void tauranTKO();
 void theodChomp();
 void arnoldMission();
+void leeMission();
+void leeDebriefed();
+void leeBuff();
+void leeGrounded();
+void arthurLeft();
+void tauranMission();
 
 //sound effects
 void shipAfterburn();

@@ -6,6 +6,7 @@
 #include "ShipInstance.h"
 #include "ShipUpgrades.h"
 #include "WeaponUpgrades.h"
+#include "AudioDriver.h"
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -287,10 +288,25 @@ bool ShipTab::onWepSelect(const SEvent& event)
 		if(currentShip->heavyWep >= 0) campaign->getWeapon(currentShip->heavyWep)->usedBy = currentShip->id;
 	}
 	else if (currentSlot >= 0 && currentSlot < MAX_HARDPOINTS) {
-		if (currentShip->weps[currentSlot] > -1) campaign->getWeapon(currentShip->weps[currentSlot])->usedBy = -1;
-		currentShip->weps[currentSlot] = id;
-		if(currentShip->weps[currentSlot] > -1) campaign->getWeapon(currentShip->weps[currentSlot])->usedBy = currentShip->id;
+		bool valid = true;
+		if (wep) {
+			if (wep->wep.wepDataId == 30 && currentShip->ship.shipDataId != 5) {
+				valid = false;
+				guiController->setOkPopup("Regis Futuri", "Please leave this weapon in the stone for a more appropriate wielder.");
+				guiController->showOkPopup();
+			}
+		}
+		if (valid) {
+			if (currentShip->weps[currentSlot] > -1) campaign->getWeapon(currentShip->weps[currentSlot])->usedBy = -1;
+			currentShip->weps[currentSlot] = id;
+			if (currentShip->weps[currentSlot] > -1) campaign->getWeapon(currentShip->weps[currentSlot])->usedBy = currentShip->id;
+		}
 	}
+	if (wep)
+		audioDriver->playMenuSound("fighter_equip.ogg");
+	else
+		audioDriver->playMenuSound("fighter_unequip.ogg");
+
 	//if it's trash don't do anything
 	displayShip(currentShip);
 	flavorBg->setVisible(false);

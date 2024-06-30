@@ -1,5 +1,6 @@
 #pragma once
 #include "BaseHeader.h"
+#include "InputComponent.h"
 #include <functional>
 
 enum OBJECTIVE_TYPE
@@ -11,6 +12,7 @@ enum OBJECTIVE_TYPE
 	OBJ_CAPTURE,
 	OBJ_PROTECT,
 	OBJ_HOLDOUT,
+	OBJ_TUTORIAL,
 	OBJ_NOT_LOADED
 };
 const extern std::unordered_map<OBJECTIVE_TYPE, std::string> objNameStrings;
@@ -166,4 +168,24 @@ class ProtectObjective : public Objective
 		virtual const bool objectiveUpdate();
 		virtual const bool success();
 	private:
+};
+
+class KeyPressObjective : public Objective
+{
+	public:
+		KeyPressObjective(std::vector<INPUT> inputsToHit) : Objective({}) {
+			m_type = OBJECTIVE_TYPE::OBJ_TUTORIAL;
+			for (u32 i = 0; i < IN_MAX_ENUM; ++i) {
+				inputsTriggered[i] = false;
+				inputsRequired[i] = false;
+			}
+			for (auto& in : inputsToHit) {
+				inputsRequired[in] = true;
+			}
+		}
+		virtual const bool objectiveUpdate();
+		virtual const bool success();
+	private:
+		bool inputsTriggered[IN_MAX_ENUM];
+		bool inputsRequired[IN_MAX_ENUM];
 };

@@ -5,6 +5,38 @@
 #include "AttributeReaders.h"
 #include "CrashLogger.h"
 
+static const bool _wingMissionNotShown(SCENARIO_TYPE which)
+{
+	for (u32 i = 0; i < NUM_SCENARIO_OPTIONS; ++i) {
+		auto scen = campaign->getSector()->getScenario(i);
+		if (!scen)
+			continue;
+		if (scen->type() == which)
+			return false;
+	}
+	return true;
+}
+
+static const SCENARIO_TYPE _checkForWingMissions()
+{
+	if (campaign->getFlag(L"THEOD_MISSION_AVAILABLE") && _wingMissionNotShown(SCENARIO_THEOD))
+		return SCENARIO_THEOD;
+	if (campaign->getFlag(L"LEE_MISSION_AVAILABLE") && _wingMissionNotShown(SCENARIO_MI_CHA))
+		return SCENARIO_MI_CHA;
+	if (campaign->getFlag(L"ARTHUR_MISSION_AVAILABLE") && _wingMissionNotShown(SCENARIO_ARTHUR))
+		return SCENARIO_ARTHUR;
+	if (campaign->getFlag(L"SEAN_MISSION_AVAILABLE") && _wingMissionNotShown(SCENARIO_SEAN))
+		return SCENARIO_SEAN;
+	if (campaign->getFlag(L"JAMES_MISSION_AVAILABLE") && _wingMissionNotShown(SCENARIO_JAMES))
+		return SCENARIO_JAMES;
+	if (campaign->getFlag(L"TAURAN_MISSION_AVAILABLE") && _wingMissionNotShown(SCENARIO_TAURAN))
+		return SCENARIO_TAURAN;
+	if (campaign->getFlag(L"CAT_MISSION_AVAILABLE") && _wingMissionNotShown(SCENARIO_CAT))
+		return SCENARIO_CAT;
+
+	return SCENARIO_NOT_LOADED;
+}
+
 void Scenario::m_loadScenData(u32 difficulty, SCENARIO_TYPE ntype)
 {
 	SCENARIO_TYPE type = ntype;
@@ -43,6 +75,9 @@ void Scenario::m_loadScenData(u32 difficulty, SCENARIO_TYPE ntype)
 			pos += val.weight;
 		}
 	}
+	SCENARIO_TYPE wingCheck = _checkForWingMissions();
+	if (wingCheck != SCENARIO_NOT_LOADED)
+		type = wingCheck;
 
 	gvReader in;
 	in.read("assets/attributes/scenarios/environments/" + environmentTypeStrings.at(m_environment) + ".gdat");

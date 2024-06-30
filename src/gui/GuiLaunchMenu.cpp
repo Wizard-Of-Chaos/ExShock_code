@@ -41,12 +41,14 @@ void GuiLaunchMenu::show()
 bool GuiLaunchMenu::onLaunch(const SEvent& event)
 {
 	if (event.GUIEvent.EventType != EGET_BUTTON_CLICKED) return true;
+	/*
 	if (!campaign->isTreeUsed(L"steven_flight_tutorial")) {
 		campaign->setDialogueTreeUsed(L"steven_flight_tutorial");
 		guiController->setDialogueTree(campaign->getCharacterDialogue(L"steven_flight_tutorial"));
 		guiController->setActiveDialog(GUI_DIALOGUE_MENU);
 		return false;
 	}
+	*/
 	guiController->setActiveDialog(GUI_LOADING_MENU);
 	audioDriver->playMenuSound("menu_confirm.ogg");
 	stateController->setState(GAME_RUNNING);

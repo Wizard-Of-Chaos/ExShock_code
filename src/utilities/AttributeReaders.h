@@ -19,7 +19,7 @@ class GameStateController;
 ISceneNode* _loadObjModelData(std::string& modelPath, std::vector<_materialTexLayer>& materials, IrrlichtComponent* component, bool dummy = false);
 //Loads ship data onto the given entity.
 //Includes an Irrlicht component and a ShipComponent. Can also load carriers, and if the ship IS a carrier it'll tack on the carrier component.
-bool loadShip(u32 id, flecs::entity entity, vector3df pos, vector3df rot, bool initializeParticles=true);
+bool loadShip(u32 id, flecs::entity entity, vector3df pos, vector3df rot, bool initializeParticles=true, NetworkId networkId=INVALID_NETWORK_ID);
 //Loads weapon data onto the given entity.
 //Includes a WeaponInfoComponent, an Irrlicht component, and whatever other components are necessary (e.g., a MissileInfoComponent).
 bool loadWeapon(u32 id, flecs::entity weaponEntity, HARDPOINT_TYPE type=HRDP_REGULAR);

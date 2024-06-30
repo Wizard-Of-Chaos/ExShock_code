@@ -180,6 +180,7 @@ bool UpgradeTab::onConfirm(const SEvent& event)
 			ShipUpgradeData* dat = shipUpgradeData[currentSelection];
 			f32 supplies = campaign->removeSupplies(curCost);
 			campaign->addNewShipUpgradeInstance(dat, curVal);
+			audioDriver->playMenuSound("item_build.ogg");
 		}
 		else {
 			if (curCost > campaign->getSupplies()) {
@@ -190,6 +191,7 @@ bool UpgradeTab::onConfirm(const SEvent& event)
 			WeaponUpgradeData* dat = weaponUpgradeData[currentSelection];
 			f32 supplies = campaign->removeSupplies(curCost);
 			campaign->addNewWeaponUpgradeInstance(dat, curVal);
+			audioDriver->playMenuSound("item_build.ogg");
 		}
 	}
 	else {
@@ -204,6 +206,7 @@ bool UpgradeTab::onConfirm(const SEvent& event)
 			ShipUpgradeData* dat = shipUpgradeData[inst->dataId];
 			campaign->addSupplies(dat->baseCost);
 			campaign->removeShipUpgrade(inst);
+			audioDriver->playMenuSound("item_scrap.ogg");
 			delete inst;
 		}
 		else {
@@ -217,6 +220,7 @@ bool UpgradeTab::onConfirm(const SEvent& event)
 			WeaponUpgradeData* dat = weaponUpgradeData[inst->dataId];
 			campaign->addSupplies(dat->baseCost);
 			campaign->removeWeaponUpgrade(inst);
+			audioDriver->playMenuSound("item_scrap.ogg");
 			delete inst;
 		}
 		m_clear();

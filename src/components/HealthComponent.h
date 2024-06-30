@@ -54,6 +54,25 @@ struct DamageInstance
 	f32 amount;
 };
 
+struct Net_DamageInstance
+{
+	Net_DamageInstance(NetworkId fr, NetworkId to, DAMAGE_TYPE type, f32 amt, u32 time, vector3df hitPos = vector3df(0, 0, 0)) : from(fr), to(to), type(type), amount(amt), time(time), hitPos(hitPos) {}
+	Net_DamageInstance() { 
+		time = 0;
+		from = INVALID_NETWORK_ID;
+		to = INVALID_NETWORK_ID;
+		hitPos = vector3df();
+		type = MAX_DAMAGE_TYPES;
+		amount = 0;
+	}
+	u32 time = 0;
+	NetworkId from = INVALID_NETWORK_ID;
+	NetworkId to = INVALID_NETWORK_ID;
+	vector3df hitPos = vector3df();
+	DAMAGE_TYPE type = MAX_DAMAGE_TYPES;
+	f32 amount = 0;
+};
+
 /*
 * It feels like this should be obvious, but the health component stores the current and max
 * health of whatever it's attached to. In the health system, an object at 0 health gets deleted.

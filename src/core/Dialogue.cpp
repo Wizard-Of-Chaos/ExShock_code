@@ -38,8 +38,14 @@ const std::unordered_map<std::wstring, DialogueCallback> dialogueEffects {
 	{L"add_bfg", addBFG},
 	{L"tauran_tko", tauranTKO},
 	{L"lee_chomped", theodChomp},
+	{L"lee_weapon", leeBuff},
+	{L"lee_debriefed", leeDebriefed},
+	{L"lee_grounded", leeGrounded},
+	{L"arthur_left", arthurLeft},
+	{L"lee_mission_engage", leeMission},
 	{L"arnold_mission_engage", arnoldMission},
-	{L"floorhit", arnoldFloorHit}
+	{L"floorhit", arnoldFloorHit},
+	{L"tauran_mission_engage", tauranMission}
 };
 
 DialogueTree::DialogueTree(std::string filename)
@@ -153,7 +159,11 @@ DialogueChoice DialogueTree::m_parseChoiceInfo(IrrXMLReader* xml)
 	std::string strtext(xml->getAttributeValueSafe("text"));
 	std::string strnext(xml->getAttributeValueSafe("next"));
 	std::string streffect(xml->getAttributeValueSafe("effect"));
-	return DialogueChoice(wstr(strtext), dialogueEffects.at(wstr(streffect)), wstr(strnext));
+	std::wstring effect = L"none";
+	if (dialogueEffects.contains(wstr(streffect)))
+		effect = wstr(streffect);
+
+	return DialogueChoice(wstr(strtext), dialogueEffects.at(effect), wstr(strnext));
 }
 
 void DialogueNode::print()

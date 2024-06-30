@@ -11,6 +11,7 @@
 #include "AIComponent.h"
 #include "IrrlichtComponent.h"
 #include "Networking.h"
+#include "NetworkingComponent.h"
 
 static void _handleInstance(flecs::entity id, DamageInstance& inst, HealthComponent* hp, bool useShields=true)
 {
@@ -29,8 +30,8 @@ static void _handleInstance(flecs::entity id, DamageInstance& inst, HealthCompon
 			hp->shields = 0;
 		}
 		else {
-			if (inst.amount > 10.f) audioDriver->playGameSound(id, "shield_impact_major.ogg");
-			else if (inst.amount > 1.f) audioDriver->playGameSound(id, "shield_impact_minor.ogg");
+			if (inst.amount > 10.f) audioDriver->playGameSound(id, "shield_impact_major.ogg", .6f);
+			else if (inst.amount > 1.f) audioDriver->playGameSound(id, "shield_impact_minor.ogg", .6f);
 			particleEffectBill("assets/effects/shieldhit/", inst.hitPos, .8f, 4.2f);
 			overflow = 0;
 		}
@@ -94,6 +95,27 @@ void damageSystem(flecs::iter it, HealthComponent* hc)
 
 			if(inst.type != DAMAGE_TYPE::VELOCITY) hp->recentInstances.push_front(inst);
 			if (hp->recentInstances.size() > MAX_TRACKED_DAMAGE_INSTANCES) hp->recentInstances.pop_back();
+
+			//if we own the damage instance, but we do *not* own what it got applied to, we send that damage over the network.
+			if (!gameController->isNetworked())
+				continue;
+
+			if (clientOwnsThisEntity(inst.from) && !clientOwnsThisEntity(inst.to)) {
+				if (inst.from.is_alive() && inst.to.is_alive()) {
+					NetworkId from = INVALID_NETWORK_ID; NetworkId to = INVALID_NETWORK_ID;
+					if (inst.from.has<NetworkingComponent>())
+						from = inst.from.get<NetworkingComponent>()->networkedId;
+					if (inst.to.has<NetworkingComponent>())
+						to = inst.to.get<NetworkingComponent>()->networkedId;
+
+					//don't send data to dead entities
+					if (to) {
+						Net_DamageInstance netInst = Net_DamageInstance(from, to, inst.type, inst.amount, inst.time, inst.hitPos);
+						gameController->sendDamageToNetwork(netInst);
+					}
+				}
+			}
+
 		}
 		//checked all the instances, now we can adjust stats
 		if (hp->health <= 0 && !hp->instances.empty()) {

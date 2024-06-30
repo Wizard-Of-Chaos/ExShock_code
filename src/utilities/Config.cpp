@@ -10,7 +10,6 @@ const std::map <std::string, E_DRIVER_TYPE> drivers =
 const std::map<std::string, VIDEO_TOGGLE> videoToggleNames =
 {
 	{"Vsync", TOG_VSYNC},
-	{"Shadows", TOG_STENCILBUF},
 	{"Antialiasing", TOG_ALIASING},
 	{"Fullscreen", TOG_FULLSCREEN},
 	{"Filtering", TOG_FILTER},
@@ -95,7 +94,6 @@ VideoConfig::VideoConfig() //default configuration
 	resY = 540;
 	toggles[TOG_VSYNC] = true;
 	toggles[TOG_ALIASING] = true;
-	toggles[TOG_STENCILBUF] = false;
 	toggles[TOG_FILTER] = true;
 	toggles[TOG_ANISOTROPIC] = true;
 	toggles[TOG_BUMP] = true;
@@ -117,7 +115,6 @@ void VideoConfig::loadConfig(std::string filename)
 	resY = std::stoi(in.values["resY"]);
 	toggles[TOG_VSYNC] = std::stoi(in.values["vsync"]);
 	toggles[TOG_ALIASING] = std::stoi(in.values["antialiasing"]);
-	toggles[TOG_STENCILBUF] = std::stoi(in.values["shadows"]);
 	toggles[TOG_FILTER] = in.getInt("trilinear");
 	toggles[TOG_ANISOTROPIC] = in.getInt("anisotropic");
 	toggles[TOG_BUMP] = in.getInt("bump");
@@ -147,7 +144,6 @@ void VideoConfig::saveConfig(std::string filename)
 	out.values["resX"] = std::to_string(resX);
 	out.values["resY"] = std::to_string(resY);
 	out.values["vsync"] = std::to_string(toggles[TOG_VSYNC]);
-	out.values["shadows"] = std::to_string(toggles[TOG_STENCILBUF]);
 	out.values["antialiasing"] = std::to_string(toggles[TOG_ALIASING]);
 	out.values["bump"] = std::to_string(toggles[TOG_BUMP]);
 	out.values["particleLevel"] = std::to_string((u32)particleLevel);
@@ -168,7 +164,7 @@ KeyConfig::KeyConfig()
 	key[IN_PITCH_UP] = KEY_KEY_R;
 	key[IN_PITCH_DOWN] = KEY_KEY_F;
 	key[IN_YAW_LEFT] = KEY_KEY_Z;
-	key[IN_YAW_RIGHT] = KEY_KEY_C;
+	key[IN_YAW_RIGHT] = KEY_KEY_V;
 	key[IN_ROLL_LEFT] = KEY_KEY_Q;
 	key[IN_ROLL_RIGHT] = KEY_KEY_E;
 	key[IN_STOP_LIN_MOVEMENT] = KEY_KEY_X;
@@ -177,7 +173,7 @@ KeyConfig::KeyConfig()
 
 	key[IN_TOGGLE_SAFETY] = KEY_KEY_U;
 	key[IN_TOGGLE_MOUSE] = KEY_KEY_Y;
-	key[IN_RELOAD] = KEY_KEY_V;
+	key[IN_RELOAD] = KEY_KEY_B;
 	key[IN_REVERSE_CAMERA] = KEY_KEY_H;
 	//key[IN_TOGGLE_HUD] = KEY_KEY_M;
 	//key[IN_TOGGLE_THROTTLE] = KEY_KEY_J;
@@ -192,7 +188,7 @@ KeyConfig::KeyConfig()
 	key[IN_COMMS_4] = KEY_KEY_4;
 	key[IN_COMMS_5] = KEY_KEY_5;
 	key[IN_COMMS_6] = KEY_KEY_6;
-	key[IN_COMMS_7] = KEY_KEY_7;
+	key[SUMMON_CHAOS_THEORY] = KEY_KEY_7;
 
 	key[IN_FIRE_REGULAR] = KEY_LBUTTON;
 	key[IN_FIRE_HEAVY] = KEY_LSHIFT;
@@ -415,7 +411,7 @@ const std::map<INPUT, std::wstring> inputNames =
 	{IN_COMMS_4, L"Comm Menu 4"},
 	{IN_COMMS_5, L"Comm Menu 5"},
 	{IN_COMMS_6, L"Comm Menu 6"},
-	{IN_COMMS_7, L"Comm Menu 7"},
+	{SUMMON_CHAOS_THEORY, L"Summon Chaos Theory"},
 
 	{IN_FIRE_REGULAR, L"Fire Regular Weapons"},
 	{IN_FIRE_PHYS, L"Fire Physical Weapon"},

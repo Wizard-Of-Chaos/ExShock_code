@@ -96,6 +96,7 @@ class GameStateController : public IEventReceiver
 		Packet hostPacketBuffer[MAX_PACKETS];
 		bool hostPacketSlotEmpty[MAX_PACKETS];
 		std::map<std::pair<flecs::entity_t, uint32_t>, SequenceNumber> hostSequenceNumberDict;
+		std::map<uint32_t, flecs::entity> networkToEntityDict;
 
 		void openListenerSocket();
 		void closeListenerSocket();

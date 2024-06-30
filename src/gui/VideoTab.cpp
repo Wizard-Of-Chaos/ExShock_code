@@ -36,12 +36,6 @@ void VideoTab::build(IGUIElement* root, VideoConfig* cfg)
 	vsync->setName("Toggle vsync.\n\nVsync locks the frame-rate of the game to the refresh rate of your monitor. This can increase performance and reduce screen tearing, but also might cause weird framerate-dependent bugs (an example found in development was music failing to swap with vsync on).\n\nIf you find one, let the devs know!");
 	setThinHoloButton(vsync, BCOL_BLUE);
 	itemStart.Y += buf;
-	str = L"Shadows: ";
-	str += vConfig->toggles[TOG_STENCILBUF] ? L"On" : L"Off";
-	shadows = guienv->addButton(rect<s32>(itemStart, itemSize), base, TOG_STENCILBUF, str.c_str(), L"Toggle shadows.");
-	shadows->setName("Toggle shadows.\n\nShadows make the lighting look more realistic, but require a ton of math under the hood (and are poorly optimized), and leaving them on will degrade performance significantly. Only enable this if your PC has some junk in its trunk.");
-	setThinHoloButton(shadows, BCOL_BLUE);
-	itemStart.Y += buf;
 	str = L"Filtering: ";
 	str += vConfig->toggles[TOG_FILTER] ? L"Trilinear" : L"Bilinear";
 	filtering = guienv->addButton(rect<s32>(itemStart, itemSize), base, TOG_FILTER, str.c_str(), L"Set filtering type.");

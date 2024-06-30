@@ -8,6 +8,7 @@ struct NetworkingComponent
 {
 	uint16_t priority = 1;
 	std::shared_ptr<AccumulatorEntry> accumulatorEntry;
+	uint32_t networkedId;
 };
 
 #endif

@@ -10,7 +10,7 @@
 #include "CrashLogger.h"
 
 flecs::entity createTurret(const s32 id, const s32 wepId, const vector3df pos, const vector3df rot, FACTION_TYPE faction,
-	const vector3df scale, s32 slot, flecs::entity owner)
+	const vector3df scale, s32 slot, flecs::entity owner, NetworkId net)
 {
 	flecs::entity turret = game_world->entity();
 	if (turret == INVALID_ENTITY) {
@@ -28,7 +28,7 @@ flecs::entity createTurret(const s32 id, const s32 wepId, const vector3df pos, c
 	irr->node->setScale(scale);
 	auto sphere = new btSphereShape(irr->node->getScale().X / 2.f);
 	btVector3 btScaleInternal =btVector3(1.f,1.f,1.f);
-	initBtRBC(turret, sphere, btScaleInternal, .1f);
+	initBtRBC(turret, sphere, btScaleInternal, .1f, 0.f, 0.f, net);
 
 	gameController->registerDeathCallback(turret, fighterDeathExplosionCallback);
 
@@ -62,6 +62,10 @@ flecs::entity createTurret(const s32 id, const s32 wepId, const vector3df pos, c
 		setTurretConstraints(turret, owner, slot);
 		turret.add<ObstacleDoesNotCollide>();
 		turret.add(gameController->doNotCollideWith(), owner);
+		ObstacleComponent obst;
+		obst.type = HAYWIRE_TURRET;
+		obst.obstacleDataId = id;
+		turret.set<ObstacleComponent>(obst);
 	}
 	else {
 		turret.set<PowerComponent>(OBSTACLE_POWER_COMPONENT);
@@ -70,11 +74,11 @@ flecs::entity createTurret(const s32 id, const s32 wepId, const vector3df pos, c
 }
 
 flecs::entity createTurretFromArchetype(const dataId archId, const vector3df pos, const vector3df rot, FACTION_TYPE fac,
-	const vector3df scale, s32 slot, flecs::entity owner)
+	const vector3df scale, s32 slot, flecs::entity owner, NetworkId net)
 {
 	auto tdata = turretArchetypeData[archId];
 	//note: doesnt apply wep upgrades
-	flecs::entity turr = createTurret(tdata->turretDataId, tdata->weps[0], pos, rot, fac, scale, slot, owner);
+	flecs::entity turr = createTurret(tdata->turretDataId, tdata->weps[0], pos, rot, fac, scale, slot, owner, net);
 	turr.set_doc_name(tdata->name.c_str());
 	return turr;
 }
@@ -111,7 +115,6 @@ void setTurretConstraints(flecs::entity turret, flecs::entity owner, u32 hardpoi
 	trB.setOrigin(btVector3(0, 0, 0));
 	auto constraint = new btGeneric6DofConstraint(*ownerRBC->rigidBody, *turrRBC->rigidBody, trA, trB, false);
 
-	//turrHdp->turretConstraints[hardpoint] = constraint;
 	constraint->setLinearLowerLimit(btVector3(0, 0, 0));
 	constraint->setLinearUpperLimit(btVector3(0, 0, 0));
 	constraint->setAngularLowerLimit(btVector3(-PI, -PI, -PI));

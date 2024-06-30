@@ -11,7 +11,9 @@ static int RUN_EVERY_TWENTY_FRAMES_BOZO_AND_NOT_BEFORE = 0;
 void networkingSystem(flecs::iter it, NetworkingComponent* ncs)
 {
 	++RUN_EVERY_TWENTY_FRAMES_BOZO_AND_NOT_BEFORE; //lol
-	if (RUN_EVERY_TWENTY_FRAMES_BOZO_AND_NOT_BEFORE < 20) return;
+	if (RUN_EVERY_TWENTY_FRAMES_BOZO_AND_NOT_BEFORE < 20) 
+		return;
+
 	RUN_EVERY_TWENTY_FRAMES_BOZO_AND_NOT_BEFORE = 0;
 	baedsLogger::logSystem("Networking");
 
@@ -54,54 +56,94 @@ void networkingSystem(flecs::iter it, NetworkingComponent* ncs)
 	// iterate accumulator list and construct packet
 	for (auto& accumulatorEntry : gameController->priorityAccumulator)
 	{
-		auto rbc = game_world->get_alive(accumulatorEntry->entity).get_mut<BulletRigidBodyComponent>();
-		auto entry = reinterpret_cast<PacketData*>(&(packet->data) + location);
-		// if no more room, done
-		if (location + sizeof(PacketData) + RBC_BYTES_NEEDED > MAX_DATA_SIZE)
-		{
-			break;
+		if (!networkIdInMyRange(accumulatorEntry->id))
+			continue; //don't update on shit we don't control
+
+		if (!stateController->networkToEntityDict.contains(accumulatorEntry->id)) {
+			baedsLogger::errLog("No entity found for network ID " + std::to_string(accumulatorEntry->id) + "\n");
+			continue;
 		}
-		entry->entityId = accumulatorEntry->entity;
-		entry->componentId = 0; // TODO: component id enum
+		flecs::entity entity = stateController->networkToEntityDict.at(accumulatorEntry->id);
 
-		/*
-		baedsLogger::log("Rigid body component: \n");
-		baedsLogger::log("\tX: " + std::to_string(rbc->rigidBody->getWorldTransform().getOrigin().getX()) + "\n");
-		baedsLogger::log("\tY: " + std::to_string(rbc->rigidBody->getWorldTransform().getOrigin().getY()) + "\n");
-		baedsLogger::log("\tZ: " + std::to_string(rbc->rigidBody->getWorldTransform().getOrigin().getZ()) + "\n");
-		baedsLogger::log("\tVelX: " + std::to_string(rbc->rigidBody->getLinearVelocity().getX()) + "\n");
-		baedsLogger::log("\tVelY: " + std::to_string(rbc->rigidBody->getLinearVelocity().getY()) + "\n");
-		baedsLogger::log("\tVelZ: " + std::to_string(rbc->rigidBody->getLinearVelocity().getZ()) + "\n");
-		baedsLogger::log("\tOriReal: " + std::to_string(rbc->rigidBody->getOrientation().getW()) + "\n");
-		baedsLogger::log("\tOriI: " + std::to_string(rbc->rigidBody->getOrientation().getX()) + "\n");
-		baedsLogger::log("\tOriJ: " + std::to_string(rbc->rigidBody->getOrientation().getY()) + "\n");
-		baedsLogger::log("\tOriK: " + std::to_string(rbc->rigidBody->getOrientation().getZ()) + "\n");
-		baedsLogger::log("\tAngularVelX: " + std::to_string(rbc->rigidBody->getAngularVelocity().getX()) + "\n");
-		baedsLogger::log("\tAngularVelY: " + std::to_string(rbc->rigidBody->getAngularVelocity().getY()) + "\n");
-		baedsLogger::log("\tAngularVelZ: " + std::to_string(rbc->rigidBody->getAngularVelocity().getZ()) + "\n");
-		*/
-		bitpacker::store<BulletRigidBodyComponent&>(std::span<bitpacker::byte_type>(entry->componentData, RBC_BYTES_NEEDED), 0, *rbc);
+		if (!entity.is_alive()) {
+			baedsLogger::errLog("Attempting to update dead entity!\n");
+			continue;
+		}
 
-		bitpacker::get<>(const_byte_span(entry->componentData, RBC_BYTES_NEEDED), 0, *rbc);
-		/*
-		baedsLogger::log("Recovered rigid body component: \n");
-		baedsLogger::log("\tX: " + std::to_string(rbc->rigidBody->getWorldTransform().getOrigin().getX()) + "\n");
-		baedsLogger::log("\tY: " + std::to_string(rbc->rigidBody->getWorldTransform().getOrigin().getY()) + "\n");
-		baedsLogger::log("\tZ: " + std::to_string(rbc->rigidBody->getWorldTransform().getOrigin().getZ()) + "\n");
-		baedsLogger::log("\tVelX: " + std::to_string(rbc->rigidBody->getLinearVelocity().getX()) + "\n");
-		baedsLogger::log("\tVelY: " + std::to_string(rbc->rigidBody->getLinearVelocity().getY()) + "\n");
-		baedsLogger::log("\tVelZ: " + std::to_string(rbc->rigidBody->getLinearVelocity().getZ()) + "\n");
-		baedsLogger::log("\tOriReal: " + std::to_string(rbc->rigidBody->getOrientation().getW()) + "\n");
-		baedsLogger::log("\tOriI: " + std::to_string(rbc->rigidBody->getOrientation().getX()) + "\n");
-		baedsLogger::log("\tOriJ: " + std::to_string(rbc->rigidBody->getOrientation().getY()) + "\n");
-		baedsLogger::log("\tOriK: " + std::to_string(rbc->rigidBody->getOrientation().getZ()) + "\n");
-		baedsLogger::log("\tAngularVelX: " + std::to_string(rbc->rigidBody->getAngularVelocity().getX()) + "\n");
-		baedsLogger::log("\tAngularVelY: " + std::to_string(rbc->rigidBody->getAngularVelocity().getY()) + "\n");
-		baedsLogger::log("\tAngularVelZ: " + std::to_string(rbc->rigidBody->getAngularVelocity().getZ()) + "\n");
-		*/
-		// move to next free location, sizeof(entry) will be the size of the struct not including the variable length array at the end
-		location += sizeof(PacketData) + RBC_BYTES_NEEDED;
-		packet->numEntries++;
+		if (entity.has<WeaponInfoComponent>())
+			continue;
+		if (!entity.has<NetworkingComponent>())
+		{
+			baedsLogger::errLog("Entity " + entDebugStr(entity) + " is missing required components NetworkingComponent");
+			continue;
+		}
+		auto nc = entity.get_mut<NetworkingComponent>();
+		
+		
+		if (entity.has<BulletRigidBodyComponent>())
+		{
+			auto rbc = entity.get_mut<BulletRigidBodyComponent>();
+			if (!rbc->rigidBody) {
+				baedsLogger::log("Entity " + entDebugStr(entity) + " is missing a rigid body!\n");
+				continue;
+			}
+			auto entry = reinterpret_cast<PacketData*>(reinterpret_cast<std::byte*>(&(packet->data)) + location);
+			// if no more room, done
+			if (location + sizeof(PacketData) + RBC_BYTES_NEEDED > MAX_DATA_SIZE)
+			{
+				break;
+			}
+			entry->networkId = nc->networkedId;
+			entry->componentId = NC_RIGID_BODY; // TODO: component id enum
+#if _DEBUG
+			auto orientationPreCompress = rbc->rigidBody->getOrientation();
+#endif
+
+			bitpacker::store<BulletRigidBodyComponent&>(std::span<bitpacker::byte_type>(entry->componentData, RBC_BYTES_NEEDED), 0, *rbc);
+
+			bitpacker::get<>(const_byte_span(entry->componentData, RBC_BYTES_NEEDED), 0, *rbc);
+#if _DEBUG
+			auto deltaOrientation = rbc->rigidBody->getOrientation() - orientationPreCompress;
+			auto deltaLength = deltaOrientation.length();
+			if (deltaLength > 3 * ORIENTATION_RES)
+			{
+				baedsLogger::log("BIG ORIENTATION JUMP OF " + std::to_string(deltaLength) + "WTF:\n");
+				baedsLogger::log("\tX: " + std::to_string(orientationPreCompress.getX()) + "\n");
+				baedsLogger::log("\tY: " + std::to_string(orientationPreCompress.getY()) + "\n");
+				baedsLogger::log("\tZ: " + std::to_string(orientationPreCompress.getZ()) + "\n");
+				baedsLogger::log("\tW: " + std::to_string(orientationPreCompress.getW()) + "\n");
+				baedsLogger::log("POST COMPRESSION ORIENTATION:\n");
+				baedsLogger::log("\tX: " + std::to_string(rbc->rigidBody->getOrientation().getX()) + "\n");
+				baedsLogger::log("\tY: " + std::to_string(rbc->rigidBody->getOrientation().getY()) + "\n");
+				baedsLogger::log("\tZ: " + std::to_string(rbc->rigidBody->getOrientation().getZ()) + "\n");
+				baedsLogger::log("\tW: " + std::to_string(rbc->rigidBody->getOrientation().getW()) + "\n");
+				baedsLogger::log("DELTA ORIENTATION: \n");
+				baedsLogger::log("\tX: " + std::to_string(deltaOrientation.getX()) + "\n");
+				baedsLogger::log("\tY: " + std::to_string(deltaOrientation.getY()) + "\n");
+				baedsLogger::log("\tZ: " + std::to_string(deltaOrientation.getZ()) + "\n");
+				baedsLogger::log("\tW: " + std::to_string(deltaOrientation.getW()) + "\n");
+			}
+#endif
+			// move to next free location, sizeof(entry) will be the size of the struct not including the variable length array at the end
+			location += sizeof(PacketData) + RBC_BYTES_NEEDED;
+			packet->numEntries++;
+
+		}
+
+		if (entity.has<HealthComponent>())
+		{
+			if (location + sizeof(PacketData) + HEALTH_COMPONENT_BYTES_NEEDED > MAX_DATA_SIZE)
+			{
+				break;
+			}
+			auto entry = reinterpret_cast<PacketData*>(reinterpret_cast<std::byte*>(&(packet->data)) + location);
+			auto hc = entity.get_mut<HealthComponent>();
+			entry->componentId = NC_HEALTH;
+			entry->networkId = nc->networkedId;
+			bitpacker::store<HealthComponent&>(std::span<bitpacker::byte_type>(entry->componentData, HEALTH_COMPONENT_BYTES_NEEDED), 0, *hc);
+
+			location += sizeof(PacketData) + HEALTH_COMPONENT_BYTES_NEEDED;
+		}		
 	}
 	gameController->isPacketValid = true;
 	// packet is constructed, ready to send
@@ -121,32 +163,68 @@ void networkingSystem(flecs::iter it, NetworkingComponent* ncs)
 
 				for (auto i = 0; i < receivedPacket->numEntries; i++)
 				{
-					auto entry = reinterpret_cast<PacketData*>(&(receivedPacket->data) + received_location);
-					if (client.sequenceNumberDict.contains({ entry->entityId, entry->componentId }) && client.sequenceNumberDict.at({ entry->entityId, entry->componentId }) > receivedPacket->sequenceNumber)
+					auto entry = reinterpret_cast<PacketData*>(reinterpret_cast<std::byte*>(&(receivedPacket->data)) + received_location);
+					received_location += sizeof(PacketData) + RBC_BYTES_NEEDED;
+
+					if (!stateController->networkToEntityDict.contains(entry->networkId)) 
+						continue;
+
+					if (networkIdInMyRange(entry->networkId)) //don't update on owned entities
+						continue;
+
+					flecs::entity& entityId = stateController->networkToEntityDict[entry->networkId];
+					if (client.sequenceNumberDict.contains({ entityId, entry->componentId }) && client.sequenceNumberDict.at({ entityId, entry->componentId }) > receivedPacket->sequenceNumber)
 					{
 						continue;
 					}
-					if (!game_world->is_alive(entry->entityId)) {
-						baedsLogger::errLog("Update for entry on ID " + std::to_string(entry->entityId) + " is not alive!\n");
+					if (!game_world->is_alive(entityId)) {
+						baedsLogger::errLog("Update for entry on ID " + std::to_string(entityId) + " is not alive!\n");
 						continue;
 					}
-					auto e = game_world->entity(entry->entityId);
-					// TODO: branch based on component
-					if (e.has<BulletRigidBodyComponent>()) {
-						auto entRBC = e.get_mut<BulletRigidBodyComponent>();
-						if (entRBC->rigidBody) {
-							bitpacker::get<>(std::span<bitpacker::byte_type>(entry->componentData, RBC_BYTES_NEEDED), 0, *entRBC);
+					auto e = game_world->entity(entityId);
+					bool breakLoop = false;
+					switch (entry->componentId)
+					{
+					case (NC_RIGID_BODY):
+					{
+						if (!e.has<BulletRigidBodyComponent>())
+						{
+							baedsLogger::errLog("Entity update [" + entDebugStr(e) + "] asked for entity without a rigid body component!\n");
+							break;
 						}
-						else {
-							baedsLogger::errLog("Entity update [" + entDebugStr(e) + "] asked for entity without a rigid body on its component!\n");
-						}
-					}
-					else {
-						baedsLogger::errLog("Entity update [" + entDebugStr(e) + "] asked for entity without a rigid body component!\n");
-					}
-					received_location += sizeof(PacketData) + RBC_BYTES_NEEDED;
 
-					client.sequenceNumberDict[{ entry->entityId, entry->componentId }] = receivedPacket->sequenceNumber;
+						auto entRBC = e.get_mut<BulletRigidBodyComponent>();
+						if (!entRBC->rigidBody)
+						{
+							baedsLogger::errLog("Entity update [" + entDebugStr(e) + "] asked for entity without a rigid body on its component!\n");
+							break;
+						}
+						bitpacker::get<>(std::span<bitpacker::byte_type>(entry->componentData, RBC_BYTES_NEEDED), 0, *entRBC);
+						received_location += sizeof(PacketData) + RBC_BYTES_NEEDED;
+						break;
+					}
+					case (NC_HEALTH):
+					{
+						if (!e.has<HealthComponent>())
+						{
+							baedsLogger::errLog("Entity update [" + entDebugStr(e) + "] asked for entity without a health component!\n");
+							break;
+						}
+						auto entHC = e.get_mut<HealthComponent>();
+						bitpacker::get<>(std::span<bitpacker::byte_type>(entry->componentData, HEALTH_COMPONENT_BYTES_NEEDED), 0, *entHC);
+						received_location += sizeof(PacketData) + HEALTH_COMPONENT_BYTES_NEEDED;
+						break;
+					}
+					default:
+					{
+						baedsLogger::errLog("Entity with unknown component type [" + std::to_string(entry->componentId) + "]\n");
+						breakLoop = true;
+						break;
+					}
+					}
+					if (breakLoop) break;
+
+					client.sequenceNumberDict[{ entityId, entry->componentId }] = receivedPacket->sequenceNumber;
 				}
 
 				client.packetSlotEmpty[i] = true;
@@ -164,34 +242,68 @@ void networkingSystem(flecs::iter it, NetworkingComponent* ncs)
 
 			for (auto i = 0; i < receivedPacket->numEntries; i++)
 			{
-				auto entry = reinterpret_cast<PacketData*>(&(receivedPacket->data) + received_location);
-				if (stateController->hostSequenceNumberDict.find({ entry->entityId, entry->componentId }) != stateController->hostSequenceNumberDict.end()) {
-					if (stateController->hostSequenceNumberDict.at({ entry->entityId, entry->componentId }) > receivedPacket->sequenceNumber) {
+				auto entry = reinterpret_cast<PacketData*>(reinterpret_cast<std::byte*>(&(receivedPacket->data)) + received_location);
+
+				if (!stateController->networkToEntityDict.contains(entry->networkId))
+					continue;
+
+				if (networkIdInMyRange(entry->networkId)) //don't update on owned entities
+					continue;
+
+				flecs::entity& entityId = stateController->networkToEntityDict[entry->networkId];
+
+				if (stateController->hostSequenceNumberDict.find({ entityId, entry->componentId }) != stateController->hostSequenceNumberDict.end()) {
+					if (stateController->hostSequenceNumberDict.at({ entityId, entry->componentId }) > receivedPacket->sequenceNumber) {
 						continue;
 					}
 				}
-				if (!game_world->is_alive(entry->entityId)) {
-					baedsLogger::errLog("Update for entry on ID " + std::to_string(entry->entityId) + " is not alive!\n");
+				if (!game_world->is_alive(entityId)) {
+					baedsLogger::errLog("Update for entry on ID " + std::to_string(entityId) + " is not alive!\n");
 					continue;
 				}
-				auto e = game_world->entity(entry->entityId);
-
-				// TODO: branch based on component
-				if (e.has<BulletRigidBodyComponent>()) {
+				auto e = game_world->entity(entityId);
+				bool breakLoop = false;
+				switch (entry->componentId)
+				{
+				case (NC_RIGID_BODY):
+				{
+					if (!e.has<BulletRigidBodyComponent>())
+					{
+						baedsLogger::errLog("Entity update [" + entDebugStr(e) + "] asked for entity without a rigid body component!\n");
+						break;
+					}
+						
 					auto entRBC = e.get_mut<BulletRigidBodyComponent>();
-					if (entRBC->rigidBody) {
-						bitpacker::get<>(std::span<bitpacker::byte_type>(entry->componentData, RBC_BYTES_NEEDED), 0, *entRBC);
-					}
-					else {
+					if (!entRBC->rigidBody) 
+					{
 						baedsLogger::errLog("Entity update [" + entDebugStr(e) + "] asked for entity without a rigid body on its component!\n");
+						break;
 					}
+					bitpacker::get<>(std::span<bitpacker::byte_type>(entry->componentData, RBC_BYTES_NEEDED), 0, *entRBC);
+					received_location += sizeof(PacketData) + RBC_BYTES_NEEDED;
+					break;
 				}
-				else {
-					baedsLogger::errLog("Entity update [" + entDebugStr(e) + "] asked for entity without a rigid body component!\n");
+				case (NC_HEALTH):
+				{
+					if (!e.has<HealthComponent>())
+					{
+						baedsLogger::errLog("Entity update [" + entDebugStr(e) + "] asked for entity without a health component!\n");
+						break;
+					}
+					auto entHC = e.get_mut<HealthComponent>();
+					bitpacker::get<>(std::span<bitpacker::byte_type>(entry->componentData, HEALTH_COMPONENT_BYTES_NEEDED), 0, *entHC);
+					received_location += sizeof(PacketData) + HEALTH_COMPONENT_BYTES_NEEDED;
+					break;
 				}
-				received_location += sizeof(PacketData) + RBC_BYTES_NEEDED;
-
-				stateController->hostSequenceNumberDict[{ entry->entityId, entry->componentId }] = receivedPacket->sequenceNumber;
+				default:
+				{
+					baedsLogger::errLog("Entity with unknown component type [" + std::to_string(entry->componentId) + "]\n");
+					breakLoop = true;
+					break;
+				}	
+				}
+				if (breakLoop) break;
+				stateController->hostSequenceNumberDict[{ entityId, entry->componentId }] = receivedPacket->sequenceNumber;
 			}
 
 			stateController->hostPacketSlotEmpty[i] = true;

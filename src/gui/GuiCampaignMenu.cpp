@@ -258,6 +258,7 @@ bool GuiCampaignMenu::advanceConfirm(const SEvent& event)
 			scenarioSelects[i]->setVisible(true);
 		}
 	}
+	audioDriver->playMenuSound("scenario_advance.ogg");
 	campaign->saveCampaign("saves/autosave.xml");
 	advance->setVisible(false);
 	show();

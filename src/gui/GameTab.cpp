@@ -66,7 +66,7 @@ void GameTab::build(IGUIElement* root)
 	str = L"Friendly Fire: ";
 	str += cfg->game.toggles[GTOG_FRIENDLY_FIRE] ? L"On" : L"Off";
 	friendlyFire = guienv->addButton(rect<s32>(itemStart, itemSize), base, GTOG_FRIENDLY_FIRE, str.c_str(), L"Toggle friendly fire.");
-	friendlyFire->setName("Toggle friendly fire.\n\nThis setting, if enabled, means you won't be able to damage your allies. Enemy ships, however, will always have this turned off. They have it too good anyway.");
+	friendlyFire->setName("Toggle friendly fire.\n\nThis setting, if disabled, means you won't be able to damage your allies. Enemy ships, however, will always have this turned on. They have it too good anyway.");
 	setThinHoloButton(friendlyFire, BCOL_RED);
 	itemStart.Y += buf;
 	str = L"Impact Damage: ";

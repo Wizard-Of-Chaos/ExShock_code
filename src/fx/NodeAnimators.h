@@ -40,7 +40,7 @@ namespace irr
 			virtual void animateNode(ISceneNode* node, u32 timeMs);
 			virtual ISceneNodeAnimator* createClone(ISceneNode* node, ISceneManager* newManager = 0);
 			virtual bool hasFinished(void) const;
-		private:
+		protected:
 			core::vector3df minScale;
 			core::vector3df maxScale;
 			u32 pulseTime;
@@ -52,15 +52,31 @@ namespace irr
 			irr::scene::ISceneManager* smgr = 0;
 		};
 
+		class CSceneNodeScalePulseStaggeredAnimator : public CSceneNodeScalePulseAnimator
+		{
+		public:
+			CSceneNodeScalePulseStaggeredAnimator(u32 startms, core::vector3df startScale = core::vector3df(1, 1, 1), core::vector3df endScale = core::vector3df(5, 5, 5), u32 timePerPulse = 500, u32 timeBetweenPulses=1000U, bool looped = false, ISceneManager* smgr = 0)
+				: CSceneNodeScalePulseAnimator(startms, startScale, endScale, timePerPulse, looped, smgr)
+			{
+				pulseTimeBetween = timeBetweenPulses;
+			}
+			virtual void animateNode(ISceneNode* node, u32 timeMs);
+			virtual ISceneNodeAnimator* createClone(ISceneNode* node, ISceneManager* newManager = 0);
+
+		protected:
+			u32 pulseTimeBetween;
+			bool pulseComplete = false;
+		};
+
 		class CScaleToNothingAndDeleteAnimator : public ISceneNodeAnimator
 		{
 		public:
 			CScaleToNothingAndDeleteAnimator(u32 startms, core::vector3df initialScale = core::vector3df(1.f), u32 timeToFade = 1000U, ISceneManager* smgr = 0) 
 				: then(startms), fadeTime(timeToFade), smgr(smgr), initialScale(initialScale) {}
-		private:
 			virtual void animateNode(ISceneNode* node, u32 timeMs);
 			virtual ISceneNodeAnimator* createClone(ISceneNode* node, ISceneManager* newManager = 0);
 			virtual bool hasFinished(void) const;
+		private:
 			core::vector3df initialScale;
 			u32 then = 0;
 			u32 fadeTime;

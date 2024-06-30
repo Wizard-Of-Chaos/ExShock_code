@@ -3,6 +3,7 @@
 #include "Campaign.h"
 #include "ShipComponent.h"
 #include <iostream>
+#include "AudioDriver.h"
 
 void ShipBuildTab::build(IGUIElement* root, GuiDialog* dial, MENU_TYPE which)
 {
@@ -227,6 +228,7 @@ bool ShipBuildTab::onConfirm(const SEvent& event)
 		}
 		campaign->addShipInstanceToHangar(campaign->buildShipInstanceFromData(data));
 		campaign->removeSupplies(data->buildCost);
+		audioDriver->playMenuSound("item_build.ogg");
 	}
 	else {
 		auto inst = campaign->getShip(currentSelection);
@@ -260,6 +262,7 @@ bool ShipBuildTab::onConfirm(const SEvent& event)
 			guiController->showOkPopup();
 			return false;
 		}
+		audioDriver->playMenuSound("item_scrap.ogg");
 		//nothing is attached and its not in use. scrap it
 		campaign->removeShipInstance(inst);
 		campaign->addSupplies(shipData[inst->ship.shipDataId]->buildCost / 2.f);
@@ -283,7 +286,9 @@ void ShipBuildTab::m_buildBuildableShipList()
 {
 	u32 count = 0;
 	for (auto [id, ship] : shipData) {
-		if (!ship->canBuild) continue;
+		if (!ship->canBuild && !(ship->id == 25 && campaign->getFlag(L"THEOD_CRAFT_DONE")))
+			continue;
+
 		position2di pos = m_listItemStart();
 		pos.Y += m_listItemHeightDiff() * count;
 		++count;

@@ -1,6 +1,5 @@
 #include "PlayerUpdateSystem.h"
 #include "GameController.h"
-#include "GameStateController.h"
 #include "BulletRigidBodyComponent.h"
 #include "FactionComponent.h"
 #include "SensorComponent.h"
@@ -21,7 +20,10 @@ void cameraUpdate(PlayerComponent* player, ISceneNode* playerShip, btRigidBody* 
 {
 	ISceneNode* targetnode = player->target;
 	ICameraSceneNode* camera = player->camera;
-	targetnode->setPosition(playerShip->getPosition());
+
+	if(!gameController->finishAnim())
+		targetnode->setPosition(playerShip->getPosition());
+
 	vector3df targetForward = getNodeForward(targetnode);
 	vector3df shipForward = getNodeForward(playerShip);
 
@@ -46,7 +48,11 @@ void cameraUpdate(PlayerComponent* player, ISceneNode* playerShip, btRigidBody* 
 	vector3df vel = btVecToIrr(body->getLinearVelocity());
 	f32 len = std::min(vel.getLength(), 650.f);
 	vel.setLength(len);
-	vector3df target = playerShip->getPosition() + (getNodeUp(playerShip) * 5.f) + vel * player->velocityFactor;
+	vector3df target;
+	if (!gameController->finishAnim() && !gameController->startAnim())
+		target = playerShip->getPosition() + (getNodeUp(playerShip) * 5.f) + vel * player->velocityFactor;
+	else 
+		target = playerShip->getPosition();
 	camera->setTarget(target);
 
 	player->reverseCamera->setUpVector(targetUp);
@@ -75,6 +81,7 @@ void playerUpdateSystem(flecs::entity player, IrrlichtComponent& irr, PlayerComp
 		return;
 	}
 	ply.timeSinceLastOrder += gameController->getDt();
+	ply.inputTimeDelay += gameController->getDt();
 	//camera work
 	cameraUpdate(&ply, irr.node, rbc.rigidBody);
 }

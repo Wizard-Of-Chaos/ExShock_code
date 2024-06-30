@@ -5,7 +5,7 @@ const bool InputComponent::isKeyDown(EKEY_CODE key) const { return keysDown[key]
 const bool InputComponent::isKeyDown(INPUT key) const { return keysDown[cfg->keys.key[key]]; }
 const bool InputComponent::commsInput() const {
 	if (isKeyDown(IN_COMMS_1) || isKeyDown(IN_COMMS_2) || isKeyDown(IN_COMMS_3) || isKeyDown(IN_COMMS_4) ||
-		isKeyDown(IN_COMMS_5) || isKeyDown(IN_COMMS_6) || isKeyDown(IN_COMMS_7)) return true;
+		isKeyDown(IN_COMMS_5) || isKeyDown(IN_COMMS_6) || isKeyDown(SUMMON_CHAOS_THEORY)) return true;
 	return false;
 }
 const INPUT InputComponent::whichCommsInput() const {
@@ -18,6 +18,6 @@ const INPUT InputComponent::whichCommsInput() const {
 	else if (isKeyDown(IN_COMMS_5)) return IN_COMMS_5;
 	else if (isKeyDown(IN_COMMS_6)) return IN_COMMS_6;
 
-	return IN_COMMS_7;
+	return SUMMON_CHAOS_THEORY;
 
 }

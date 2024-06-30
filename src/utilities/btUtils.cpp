@@ -25,7 +25,7 @@ btVector3 velocitySafeNormalize(btVector3& velocity)
 	return retval;
 }
 
-bool initBtRBC(flecs::entity id, btCollisionShape* shape, btVector3& scale, f32 mass, f32 startVel, f32 startRotVel)
+bool initBtRBC(flecs::entity id, btCollisionShape* shape, btVector3& scale, f32 mass, f32 startVel, f32 startRotVel, NetworkId networkId)
 {
 	if (!id.has<IrrlichtComponent>()) return false;
 
@@ -53,17 +53,17 @@ bool initBtRBC(flecs::entity id, btCollisionShape* shape, btVector3& scale, f32 
 	id.set<BulletRigidBodyComponent>(rbc);
 	
 	if (!id.has<NetworkingComponent>() && gameController->isNetworked()) {
-		initializeNetworkingComponent(id, 1);
+		initializeNetworkingComponent(id, 1, networkId);
 	}
 	id.add<SpawnInvulnerable>();
 
 	return true;
 }
 
-bool initializeBtConvexHull(flecs::entity entityId, btConvexHullShape shape, btVector3& scale, f32 mass, f32 startVel, f32 startRotVel)
+bool initializeBtConvexHull(flecs::entity entityId, btConvexHullShape shape, btVector3& scale, f32 mass, f32 startVel, f32 startRotVel, NetworkId networkId)
 {
 	auto newShape = new btConvexHullShape(shape);
-	return initBtRBC(entityId, newShape, scale, mass, startVel, startRotVel);
+	return initBtRBC(entityId, newShape, scale, mass, startVel, startRotVel, networkId);
 }
 
 flecs::entity getIdFromBt(const btCollisionObject* object)

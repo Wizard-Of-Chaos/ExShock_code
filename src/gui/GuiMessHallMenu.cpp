@@ -145,8 +145,14 @@ void GuiMessHallMenu::show()
 		auto man = sortarr[i].man;
 		auto name = man->name;
 		std::transform(name.begin(), name.end(), name.begin(), ::toupper);
-		if (man->injured) name += " (INJURED)";
-
+		if (man->injured) {
+			if (man->turnsInjured >= 0)
+				name += " (INJURED)";
+			else if (man->turnsInjured >= -100)
+				name += " (ON MISSION)";
+			else
+				name += " (GROUNDED)";
+		}
 		pilotRecords[i].bg->setVisible(true);
 		pilotRecords[i].name->setText(wstr(name).c_str());
 		pilotRecords[i].kills->setText(std::to_wstring(man->totalKills).c_str());

@@ -4,6 +4,7 @@
 #include "Dialogue.h"
 #include "Campaign.h"
 #include <iostream>
+#include <cwctype>
 
 void GuiDialogueMenu::init()
 {
@@ -66,7 +67,7 @@ static const bool _choiceValid(DialogueChoice& choice) {
 	return true;
 }
 
-IGUIStaticText* GuiDialogueMenu::m_addTextToScroll(std::wstring str)
+IGUIStaticText* GuiDialogueMenu::m_addTextToScroll(std::wstring spkr, std::wstring str)
 {
 	auto& screen = driver->getScreenSize();
 
@@ -75,7 +76,14 @@ IGUIStaticText* GuiDialogueMenu::m_addTextToScroll(std::wstring str)
 
 	IGUIStaticText* prev = header;
 	if (previousTxt) prev = previousTxt;
-	auto txt = guienv->addStaticText(str.c_str(), recti(vector2di(0, 0), fullTxtSize), false, true, prev);
+	std::wstring concat = spkr;
+	if (concat != L"") {
+		std::transform(concat.begin(), concat.end(), concat.begin(), std::towupper);
+		concat = concat + L": ";
+	}
+	concat = concat + str;
+
+	auto txt = guienv->addStaticText(concat.c_str(), recti(vector2di(0, 0), fullTxtSize), false, true, prev);
 	setDialogueText(txt);
 	txt->setNotClipped(true);
 
@@ -107,7 +115,7 @@ void GuiDialogueMenu::m_setNextNode(std::wstring id)
 	auto spkr = driver->getTexture(path.c_str());
 	if (!spkr) spkr = driver->getTexture("assets/ui/people/unknown.png");
 
-	m_addTextToScroll(currentNode.text().c_str());
+	m_addTextToScroll(currentNode.speaker(), currentNode.text());
 
 	speakerName->setText(currentNode.speaker().c_str());
 	speaker->setImage(spkr);
@@ -156,7 +164,7 @@ bool GuiDialogueMenu::onChoice(const SEvent& event)
 		}
 		c.choice.callback();
 
-		auto txt = m_addTextToScroll(c.choice.text().c_str());
+		auto txt = m_addTextToScroll(L"", c.choice.text());
 		txt->setOverrideColor(SColor(255, 255, 255, 255));
 		txt->setTextAlignment(EGUIA_UPPERLEFT, EGUIA_CENTER);
 

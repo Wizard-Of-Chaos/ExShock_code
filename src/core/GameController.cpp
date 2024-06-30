@@ -22,6 +22,7 @@
 #include "SystemsHeader.h"
 #include "GameFunctions.h"
 #include "ShipUtils.h"
+#include "PhysShieldComponent.h"
 #include <iostream>
 #include <random>
 
@@ -40,6 +41,16 @@ GameController::GameController()
 	m_dummyScenario->setType(1, SCENARIO_DUMMY);
 }
 
+void GameController::markForDeath(flecs::entity& ent, bool fromNetwork)
+{
+	if (isMarkedForDeath(ent)) return;
+	m_markedForDeath.push_back(ent);
+	if (gameController->isNetworked() && !fromNetwork) {
+		if (ent.has<NetworkingComponent>())
+			m_networkMarkedForDeath.push_back(ent.get<NetworkingComponent>()->networkedId);
+	}
+}
+
 void GameController::update()
 {
 	u32 now = device->getTimer()->getTime();
@@ -51,31 +62,39 @@ void GameController::update()
 	accumulator += delta;
 	m_timeSinceScenarioStart += delta;
 
-	musicChangeCurCooldown += dt;
+	musicChangeCurCooldown += delta;
 
 	if (m_inCombat && (musicChangeCurCooldown > musicChangeCooldown)) {
 		triggerAmbientMusic();
 	}
-	audioDriver->ingameMusicUpdate(dt);
-	try {
-		baedsLogger::logSystem("Bullet Update");
-		bWorld->stepSimulation(delta, 15, btScalar(1.f) / btScalar(100.f));
-		collisionCheckingSystem();
+	audioDriver->ingameMusicUpdate(delta);
+	if (!m_finishingAnim && !m_startingAnim) {
+		try {
+			baedsLogger::logSystem("Bullet Update");
+			bWorld->stepSimulation(delta, 15, btScalar(1.f) / btScalar(100.f));
+			collisionCheckingSystem();
+		}
+		catch (...) {
+			baedsLogger::errLog("Bullet simulation failed to progress correctly\n");
+		}
+		auto rbf = game_world->filter<BulletRigidBodyComponent, IrrlichtComponent>();
+		rbf.each([](flecs::entity e, BulletRigidBodyComponent& rbc, IrrlichtComponent& irr) {
+			if (!e.is_alive())
+				return;
+			if (!e.has<IrrlichtComponent>() || !e.has<BulletRigidBodyComponent>())
+				return;
+			irrlichtRigidBodyPositionSystem(e, rbc, irr);
+			});
 	}
-	catch (...) {
-		baedsLogger::errLog("Bullet simulation failed to progress correctly\n");
+
+	if (getPlayer().is_alive()) {
+		auto pf = game_world->filter<IrrlichtComponent, PlayerComponent, BulletRigidBodyComponent>();
+		pf.each([](flecs::entity e, IrrlichtComponent& irr, PlayerComponent& player, BulletRigidBodyComponent& rbc) {
+			playerUpdateSystem(e, irr, player, rbc);
+			});
 	}
-	auto rbf = game_world->filter<BulletRigidBodyComponent, IrrlichtComponent>();
-	rbf.each([](flecs::entity e, BulletRigidBodyComponent& rbc, IrrlichtComponent& irr) {
-		irrlichtRigidBodyPositionSystem(e, rbc, irr);
-		});
 
-	auto pf = game_world->filter<IrrlichtComponent, PlayerComponent, BulletRigidBodyComponent>();
-	pf.each([](flecs::entity e, IrrlichtComponent& irr, PlayerComponent& player, BulletRigidBodyComponent& rbc) {
-		playerUpdateSystem(e, irr, player, rbc);
-	});
-
-	while (accumulator >= dt) {
+	while (accumulator >= dt && !m_finishingAnim && !m_startingAnim) {
 		
 		try {
 			game_world->progress(dt);
@@ -110,9 +129,15 @@ void GameController::update()
 		m_gunsToFire.clear();
 
 		for (auto& shot : m_networkGunsToFire) {
-			auto gun = game_world->entity(shot.firingWeapon);
+			if (stateController->networkToEntityDict.find(shot.firingWeapon) == stateController->networkToEntityDict.end()) {
+				baedsLogger::errLog("No weapon exists for network id " + std::to_string(shot.firingWeapon) + "\n");
+				continue;
+			}
+			flecs::entity gun = flecs::entity(stateController->networkToEntityDict.at(shot.firingWeapon));
 			if (!gun.is_alive()) {
-				baedsLogger::log("Gun shot requested for entity " + std::to_string(shot.firingWeapon) + " but entity does not exist.\n");
+				baedsLogger::errLog("Weapon for network id " + std::to_string(shot.firingWeapon) + " is dead.\n");
+				stateController->networkToEntityDict.erase(shot.firingWeapon);
+				destroyNetworkId(shot.firingWeapon); //free it up
 				continue;
 			}
 			if (!gun.has<WeaponInfoComponent>() || !gun.has<PowerComponent>() || !gun.has<WeaponFiringComponent>()) {
@@ -122,7 +147,8 @@ void GameController::update()
 			auto info = gun.get_mut<WeaponInfoComponent>();
 			auto power = gun.get_mut<PowerComponent>();
 			auto firing = gun.get_mut<WeaponFiringComponent>();
-			info->fire(info, firing, power, gun, dt, &shot);
+			if(info->fire(info, firing, power, gun, dt, &shot))
+				audioDriver->playGameSound(gun, info->fireSound);
 		}
 		m_networkGunsToFire.clear();
 
@@ -135,13 +161,54 @@ void GameController::update()
 			func();
 		}
 		m_shipsToSpawn.clear();
-		if (mapRunner.run(dt)) stateController->setState(GAME_FINISHED);
+
+		if (isNetworked()) {
+			for (auto& inst : m_netDamageToApply) {
+				flecs::entity ent = getEntityFromNetId(inst.to);
+				if (ent == INVALID_ENTITY)
+					continue;
+				if (!ent.has<HealthComponent>())
+					continue;
+
+				//its completely acceptable to have an instance from a dead entity here because bullets can travel after a guy dies
+				ent.get_mut<HealthComponent>()->registerDamageInstance(
+					DamageInstance(getEntityFromNetId(inst.from), ent, inst.type, inst.amount, inst.time, inst.hitPos));
+			}
+			m_netDamageToApply.clear();
+		}
+
 		bWorld->checkConstraints(dt);
 		applyPopups();
 		m_hudUpdate();
 
 		t += dt;
 		accumulator -= dt;
+
+		if (mapRunner.run(dt)) {
+			clearPlayerHUD();
+			mapRunner.endMap();
+			m_finishingAnim = true;
+		}
+	}
+	if (m_finishingAnim) {
+		m_finishTimer += delta;
+		if (m_finishTimer >= 5.f)
+			stateController->setState(GAME_FINISHED);
+	}
+	if (m_startingAnim) {
+		m_startTimer += delta;
+		if (m_startTimer >= 3.5f) {
+			gameController->getPlayer().get<IrrlichtComponent>()->node->removeAnimators();
+			initializeHUD();
+			device->getCursorControl()->setPosition(vector2di(driver->getScreenSize().Width / 2, driver->getScreenSize().Height / 2));
+			if(mapRunner.objective()->hasRadioSpawn())
+				mapRunner.radioSignal = createRadioMarker(mapRunner.objectiveStartPos()[0] + vector3df(0.f, -75.f, 0.f), "Radio Signal");
+			m_startingAnim = false;
+			for (auto& msg : startMsgs) {
+				addLargePopup(msg.msg, msg.spkr, msg.banter);
+			}
+			startMsgs.clear();
+		}
 	}
 }
 
@@ -153,6 +220,18 @@ void GameController::init()
 	m_markedForDeath.clear();
 	m_gunsToFire.clear();
 	m_shipsToSpawn.clear();
+	stateController->networkToEntityDict.clear();
+	if (m_isNetworked) {
+		if (stateController->isHost()) {
+			setNetworkIdRange(1, HOST_RANGE);
+		}
+		else {
+			setNetworkIdRange(HOST_RANGE+1, HOST_RANGE + CONNECTED_RANGE);
+		}
+	}
+	else {
+		setNetworkIdRange(1, HOST_RANGE);
+	}
 
 	FIRED_BY = INVALID_ENTITY;
 	DO_NOT_COLLIDE_WITH = INVALID_ENTITY;
@@ -199,20 +278,11 @@ void GameController::init()
 	registerComponents(); 
 	registerSystems();
 	registerRelationships();
+	m_finishingAnim = false;
+	m_finishTimer = 0.f;
+	m_startingAnim = true;
+	m_startTimer = 0.f;
 
-	if (m_isNetworked) {
-		if (stateController->isHost()) {
-			baedsLogger::log("I am the host, setting entity range\n");
-			game_world->set_entity_range(1, HOST_RANGE);
-		}
-		else {
-			game_world->set_entity_range(HOST_RANGE, HOST_RANGE + CONNECTED_RANGE);
-		}
-		game_world->enable_range_check(false);
-	}
-	else {
-		game_world->set_entity_range(1, HOST_RANGE);
-	}
 	musicChangeCurCooldown = musicChangeCooldown;
 	audioDriver->setMusicGain(0, 0.f);
 	audioDriver->setMusicGain(1, 1.f);
@@ -222,22 +292,15 @@ void GameController::init()
 bool clientOwnsThisEntity(const flecs::entity& ent)
 {
 	if (!ent.is_alive()) {
-		baedsLogger::errLog("Trying to check ownership of a non-entity\n");
+		baedsLogger::errLog("Trying to check ownership of a dead entity.\n");
 		return false;
 	}
-
-	if (stateController->isHost()) {
-		if (ent.id() > 0 && ent.id() <= HOST_RANGE)
-			return true;
+	if (!ent.has<NetworkingComponent>()) {
+		baedsLogger::errLog("Ownership check does not have networking component on entity " + entDebugStr(ent) + "\n");
 		return false;
 	}
-	else {
-		u32 begin = HOST_RANGE + ((stateController->slot() - 1) * CONNECTED_RANGE);
-		u32 end = begin + CONNECTED_RANGE;
-		if (ent.id() > begin && ent.id() <= end)
-			return true;
-		return false;
-	}
+	auto net = ent.get<NetworkingComponent>();
+	return networkIdInMyRange(net->networkedId);
 }
 
 void GameController::registerComponents()
@@ -268,6 +331,7 @@ void GameController::registerComponents()
 	game_world->component<TurretHardpointComponent>();
 	game_world->component<PowerComponent>();
 	game_world->component<StatusEffectComponent>();
+	game_world->component<PhysShieldComponent>();
 	if (m_isNetworked) {
 		game_world->component<NetworkingComponent>();
 	}
@@ -350,6 +414,8 @@ void GameController::close()
 	m_markedForDeath.clear();
 	m_gunsToFire.clear();
 	m_shipsToSpawn.clear();
+	m_netDamageToApply.clear();
+	networkDamageToSend.clear();
 
 	FIRED_BY = INVALID_ENTITY;
 	DO_NOT_COLLIDE_WITH = INVALID_ENTITY;
@@ -392,10 +458,13 @@ void GameController::close()
 	popups.clear();
 	deathCallbacks.clear();
 	hitCallbacks.clear();
+	stateController->networkToEntityDict.clear();
+	clearAllNetworkIds();
 
 	lmgr->setGlobal(nullptr);
 
 	playerEntity = INVALID_ENTITY;
+	chaosTheory = INVALID_ENTITY;
 	for (u32 i = 0; i < MAX_WINGMEN_ON_WING; ++i) {
 		wingmen[i] = INVALID_ENTITY;
 		wingmenDisengaged[i] = false;
@@ -403,8 +472,7 @@ void GameController::close()
 	device->getCursorControl()->setActiveIcon(ECI_NORMAL);
 
 	audioDriver->clearFades();
-	audioDriver->setMusicGain(0, 1.f);
-	audioDriver->setMusicGain(1, 0.f);
+	audioDriver->gainTrack(0, .65f, 1.f);
 	musicChangeCurCooldown = musicChangeCooldown;
 	open = false;
 	m_inCombat = false;
@@ -440,7 +508,9 @@ void GameController::m_hudUpdate()
 	for (ContactInfo info : getPlayer().get<SensorComponent>()->contacts) { //checks contacts and updates hud if they dont exist
 		flecs::entity id = info.ent;
 		if (trackedContacts[id] == nullptr && id.is_alive()) {
-
+			if (id.has<IrrlichtComponent>()) {
+				if (id.get<IrrlichtComponent>()->node->getID() == ID_IsNotSelectable) continue;
+			}
 			HUDContact* ct = new HUDContact(rootHUD, id, playerId);
 			//player->contacts.push_back(ct);
 			trackedContacts[id] = ct;
@@ -641,10 +711,18 @@ void GameController::addPopup(std::wstring spkr, std::wstring msg)
 
 void GameController::addLargePopup(std::string msg, std::string spkr, bool banter)
 {
+	if (startAnim()) {
+		startMsgs.push_back({ spkr, msg, banter });
+		return;
+	}
 	largePop->showMsg(msg, spkr, banter);
 }
 void GameController::addLargePopup(std::wstring msg, std::wstring spkr, bool banter)
 {
+	if (startAnim()) {
+		startMsgs.push_back({ wstrToStr(spkr), wstrToStr(msg), banter });
+		return;
+	}
 	largePop->showMsg(wstrToStr(msg), wstrToStr(spkr), banter);
 }
 
@@ -655,6 +733,14 @@ void GameController::setPlayer(flecs::entity_t id)
 flecs::entity GameController::getPlayer()
 {
 	return flecs::entity(game_world->get_world(), playerEntity);
+}
+void GameController::setChaosTheory(flecs::entity_t id)
+{
+	chaosTheory = id;
+}
+flecs::entity GameController::getChaosTheory()
+{
+	return flecs::entity(game_world->get_world(), chaosTheory);
 }
 
 void GameController::setWingman(flecs::entity_t id, u32 slot)
@@ -771,6 +857,13 @@ void GameController::initScenario()
 	isPlayerAlive = true;
 
 	if (stateController->inCampaign) {
+		if (tutorial) {
+			campaign->getSector()->buildScenarios();
+			campaign->getSector()->selectCurrentScenario(0);
+			currentScenario = campaign->getSector()->getCurrentScenario();
+
+			currentScenario->setType(campaign->getDifficulty(), SCENARIO_TUTORIAL);
+		}
 		if (campaign->getFlag(L"ARNOLD_MISSION_AVAILABLE")) {//override after arnold's mission gets accepted
 			baedsLogger::log("Hijacking scenario for Arnold.\n");
 			currentScenario->setType(campaign->getDifficulty(), SCENARIO_ARNOLD);
@@ -796,10 +889,18 @@ void GameController::initScenario()
 			size_t location = 0;
 
 			for (auto& ship : ships) {
-				ScenarioGenPacketData* dat = reinterpret_cast<ScenarioGenPacketData*>((&kingPacket.data) + location);
+				ScenarioGenPacketData* dat = reinterpret_cast<ScenarioGenPacketData*>(reinterpret_cast<std::byte*>(&kingPacket.data) + location);
 				dat->type = PSG_SHIP;
 				bitpacker::store<MapGenShip&>(byte_span(dat->data, MAP_GEN_SHIP_BYTES_NEEDED), 0, ship);
 				location += sizeof(ScenarioGenPacketData) + MAP_GEN_SHIP_BYTES_NEEDED;
+				++kingPacket.numEntries;
+			}
+			auto& obstacles = mapRunner.mapObstacles();
+			for (auto& obstacle : obstacles) {
+				ScenarioGenPacketData* dat = reinterpret_cast<ScenarioGenPacketData*>(reinterpret_cast<std::byte*>(&kingPacket.data) + location);
+				dat->type = PSG_OBSTACLE;
+				bitpacker::store<MapGenObstacle&>(byte_span(dat->data, MAP_GEN_OBSTACLE_BYTES_NEEDED), 0, obstacle);
+				location += sizeof(ScenarioGenPacketData) + MAP_GEN_OBSTACLE_BYTES_NEEDED;
 				++kingPacket.numEntries;
 			}
 			for (auto& client : stateController->clientData) {
@@ -823,7 +924,7 @@ void GameController::initScenario()
 						size_t location = 0;
 						client.finishedLoading = true;
 						for (u32 i = 0; i < packet.numEntries; ++i) {
-							ScenarioGenPacketData* dat = reinterpret_cast<ScenarioGenPacketData*>((&packet.data) + location);
+							ScenarioGenPacketData* dat = reinterpret_cast<ScenarioGenPacketData*>(reinterpret_cast<std::byte*>(&packet.data) + location);
 							if (dat->type == PSG_SHIP) {
 								baedsLogger::log("We have a ship!\n");
 								MapGenShip ship;
@@ -831,7 +932,14 @@ void GameController::initScenario()
 								generatedShips.push_back(ship);
 								location += sizeof(ScenarioGenPacketData) + MAP_GEN_SHIP_BYTES_NEEDED;
 							}
-							//else if it's an obstacle...
+							else if (dat->type == PSG_OBSTACLE)
+							{
+								// clients probably shouldn't be sending obstacles but this is here for completeness
+								MapGenObstacle obstacle;
+								bitpacker::get<>(const_byte_span(dat->data, MAP_GEN_OBSTACLE_BYTES_NEEDED), 0, obstacle);
+								generatedObstacles.push_back(obstacle);
+								location += sizeof(ScenarioGenPacketData) + MAP_GEN_OBSTACLE_BYTES_NEEDED;
+							}
 						}
 					}
 				}
@@ -850,6 +958,7 @@ void GameController::initScenario()
 			}
 			for (auto& obst : generatedObstacles) {
 				//build obstacles
+				createObstacleFromMapGen(obst);
 			}
 			baedsLogger::log("Done. Sending off final packet.\n");
 			for (auto& client : stateController->clientData) {
@@ -869,7 +978,7 @@ void GameController::initScenario()
 					waiting = false;
 					size_t location = 0;
 					for (u32 i = 0; i < packet.numEntries; ++i) {
-						ScenarioGenPacketData* dat = reinterpret_cast<ScenarioGenPacketData*>((&packet.data) + location);
+						ScenarioGenPacketData* dat = reinterpret_cast<ScenarioGenPacketData*>(reinterpret_cast<std::byte*>(&packet.data) + location);
 						if (dat->type == PSG_SHIP) {
 							MapGenShip ship;
 							baedsLogger::log("We have a ship!\n");
@@ -877,7 +986,13 @@ void GameController::initScenario()
 							generatedShips.push_back(ship);
 							location += sizeof(ScenarioGenPacketData) + MAP_GEN_SHIP_BYTES_NEEDED;
 						}
-						//else if it's an obstacle...
+						else if (dat->type == PSG_OBSTACLE)
+						{
+							MapGenObstacle obstacle;
+							bitpacker::get<>(const_byte_span(dat->data, MAP_GEN_OBSTACLE_BYTES_NEEDED), 0, obstacle);
+							generatedObstacles.push_back(obstacle);
+							location += sizeof(ScenarioGenPacketData) + MAP_GEN_OBSTACLE_BYTES_NEEDED;
+						}
 					}
 				}
 			}
@@ -888,6 +1003,7 @@ void GameController::initScenario()
 			}
 			for (auto& obst : generatedObstacles) {
 				//build obstacles
+				createObstacleFromMapGen(obst);
 			}
 
 			//build this player's ship, send off packet
@@ -897,7 +1013,7 @@ void GameController::initScenario()
 			loadPacket.packetType = PTYPE_SCENARIO_GEN;
 			size_t location = 0;
 			for (auto& ship : ships) {
-				ScenarioGenPacketData* dat = reinterpret_cast<ScenarioGenPacketData*>((&loadPacket.data) + location);
+				ScenarioGenPacketData* dat = reinterpret_cast<ScenarioGenPacketData*>(reinterpret_cast<std::byte*>(&loadPacket.data) + location);
 				dat->type = PSG_SHIP;
 				bitpacker::store<MapGenShip&>(byte_span(dat->data, MAP_GEN_SHIP_BYTES_NEEDED), 0, ship);
 				location += sizeof(ScenarioGenPacketData) + MAP_GEN_SHIP_BYTES_NEEDED;

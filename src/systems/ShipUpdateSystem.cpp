@@ -242,7 +242,7 @@ void shipUpdateSystem(flecs::iter it, ThrustComponent* thrc, ShipComponent* shpc
 				jetPairOn(right1, left2);
 			}
 			else {
-				thrust->moves[YAW_LEFT] = false;
+				thrust->moves[YAW_RIGHT] = false;
 			}
 		}
 		
@@ -258,7 +258,7 @@ void shipUpdateSystem(flecs::iter it, ThrustComponent* thrc, ShipComponent* shpc
 			if (angularSafetyCheck(angVel, thrust, ship, angDir, getRigidBodyBackward(body), friendly)) {
 			}
 			else {
-				thrust->moves[ROLL_LEFT] = false;
+				thrust->moves[ROLL_RIGHT] = false;
 			}
 		}
 		

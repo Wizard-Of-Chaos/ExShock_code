@@ -82,6 +82,8 @@ class GameController
 
 		void setPlayer(flecs::entity_t id);
 		flecs::entity getPlayer();
+		void setChaosTheory(flecs::entity_t id);
+		flecs::entity getChaosTheory();
 
 		void setWingman(flecs::entity_t id, u32 slot);
 		flecs::entity getWingman(u32 slot);
@@ -123,11 +125,7 @@ class GameController
 		const flecs::entity doNotCollideWith() const { return DO_NOT_COLLIDE_WITH; }
 		//Fired-by relationship.
 		const flecs::entity firedBy() const { return FIRED_BY; }
-		void markForDeath(flecs::entity& ent) {
-			if (isMarkedForDeath(ent)) return;
-			m_markedForDeath.push_back(ent);
-			m_networkMarkedForDeath.push_back(ent);
-		}
+		void markForDeath(flecs::entity& ent, bool fromNetwork = false);
 		bool isMarkedForDeath(flecs::entity& ent) {
 			for (auto& entity : m_markedForDeath) {
 				if (ent == entity) return true;
@@ -156,9 +154,19 @@ class GameController
 		//Adds the shot to the queue for shots to be sent over the network.
 		void sendShotToNetwork(Network_ShotFired& shot) { m_networkShotsToSend.push_back(shot); }
 		//shots going TO the network
+
+		//Takes the damage from the network and adds it to the damage instances for a given ship.
+		void addDamageFromNetwork(Net_DamageInstance& inst) { m_netDamageToApply.push_back(inst); }
+		//Adds the shot to damage instances that need to be sent.
+		void sendDamageToNetwork(Net_DamageInstance& inst) { networkDamageToSend.push_back(inst); }
+
+		std::vector <Net_DamageInstance> networkDamageToSend;
 		std::vector<Network_ShotFired> m_networkShotsToSend;
-		std::vector<flecs::entity>& getNetworkDeadEntities() { return m_networkMarkedForDeath; }
+		std::vector<NetworkId>& getNetworkDeadEntities() { return m_networkMarkedForDeath; }
 		Packet networkShotPacket;
+		const bool finishAnim() const { return m_finishingAnim; }
+		const bool startAnim() const { return m_startingAnim; }
+		bool tutorial = false;
 	private:
 		std::mutex m_popup_mtx;
 		std::mutex m_ctct_mtx;
@@ -167,14 +175,15 @@ class GameController
 		std::list<std::pair<std::string, std::string>> m_popups;
 
 		std::vector<flecs::entity> m_markedForDeath;
-		std::vector<flecs::entity> m_networkMarkedForDeath;
+		std::vector<NetworkId> m_networkMarkedForDeath;
 		std::vector<flecs::entity> m_gunsToFire;
 		//shots FROM the network
 		std::vector<Network_ShotFired> m_networkGunsToFire;
-
+		std::vector<Net_DamageInstance> m_netDamageToApply;
 		std::vector<std::function<void()>> m_shipsToSpawn;
 
 		flecs::entity_t playerEntity;
+		flecs::entity_t chaosTheory;
 
 		flecs::entity_t wingmen[MAX_WINGMEN_ON_WING];
 		bool wingmenDisengaged[MAX_WINGMEN_ON_WING];
@@ -185,6 +194,8 @@ class GameController
 
 		bool open = false;
 		bool m_isNetworked = false;
+		bool m_finishingAnim = false;
+		bool m_startingAnim = true;
 
 		u32 then;
 		f32 accumulator = 0.0f;
@@ -192,7 +203,8 @@ class GameController
 		f32 t = 0.0f;
 
 		f32 m_timeSinceScenarioStart = 0.f;
-
+		f32 m_finishTimer = 0.f;
+		f32 m_startTimer = 0.f;
 		//bullet stuff
 		btBroadphaseInterface* broadPhase;
 		btDefaultCollisionConfiguration* collisionConfig;
@@ -221,6 +233,13 @@ class GameController
 		flecs::entity DO_NOT_COLLIDE_WITH = INVALID_ENTITY;
 
 		Scenario* m_dummyScenario = nullptr;
+
+		struct _storedHudMsg {
+			std::string spkr;
+			std::string msg;
+			bool banter = false;
+		};
+		std::vector<_storedHudMsg> startMsgs;
 };
 
 

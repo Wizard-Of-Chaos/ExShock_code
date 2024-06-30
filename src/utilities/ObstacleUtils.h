@@ -3,31 +3,32 @@
 #define OBSTACLEUTILS_H
 #include "BaseHeader.h"
 #include "FactionComponent.h"
+#include "LoadoutData.h"
 /*
 * Creates a dynamic obstacle from the given ID. Usually called from other functions. Pulls the data out of the obstacle
 * data and gives it the given scale, position, rotation, mass, and sets it up with rigid body data if applicable.
 */
-flecs::entity createDynamicObstacle(u32 id, vector3df position, vector3df rotation, vector3df scale, f32 mass, f32 startLinVel=0, f32 startRotVel=0, bool startActivated = false);
+flecs::entity createDynamicObstacle(u32 id, vector3df position, vector3df rotation, vector3df scale, f32 mass, f32 startLinVel=0, f32 startRotVel=0, bool startActivated = false, NetworkId net=0);
 //Creates a static obstacle. Effectively the same as a dynamic obstacle, except that with a mass of 0, the obstacle doesn't move.
-flecs::entity createStaticObstacle(u32 id, vector3df position, vector3df rotation, vector3df scale);
+flecs::entity createStaticObstacle(u32 id, vector3df position, vector3df rotation, vector3df scale, NetworkId net=0);
 
 //Creates an asteroid at the given position. Includes health, irrlicht, and rigid body components. Returns the ID.
 flecs::entity createAsteroid(vector3df position, vector3df rotation, vector3df scale, f32 mass, f32 startLinVel=0, f32 startRotVel=0);
 //Creates an explosive asteroid at the given position. Includes health, irrlicht, and rigid body components. Returns the ID.
-flecs::entity createExplosiveAsteroid(vector3df position, vector3df rotation, vector3df scale, f32 mass);
+flecs::entity createExplosiveAsteroid(vector3df position, vector3df rotation, vector3df scale, f32 mass, NetworkId net=INVALID_NETWORK_ID);
 //Creates a gigantic asteroid with mass 0 at the given position. This means this asteroid will never move. Apply rings around these.
 flecs::entity createHugeAsteroid(vector3df position, vector3df rotation, vector3df scale);
 //Creates a swarm of asteroids at the given position and if velocities are set kicks them in the appropriate direction. Mildly randomized.
 void createAsteroidSwarm(vector3df position, vector3df rotation, vector3df scale, f32 mass, f32 startLinVel= 0, f32 startRotVel=0);
-flecs::entity createIceAsteroid(vector3df position, vector3df rotation, vector3df scale, f32 startVel=0, f32 startRotVel=0, bool split=true);
+flecs::entity createIceAsteroid(vector3df position, vector3df rotation, vector3df scale, f32 startVel=0, f32 startRotVel=0, bool split=true, NetworkId networkId=INVALID_NETWORK_ID);
 flecs::entity createIceSpikeAsteroid(vector3df position, vector3df rotation, vector3df scale, f32 startVel, f32 startRotVel);
-flecs::entity createRadioactiveAsteroid(vector3df position, vector3df rotation, vector3df scale, f32 startVel, f32 startRotVel);
+flecs::entity createRadioactiveAsteroid(vector3df position, vector3df rotation, vector3df scale, f32 startVel, f32 startRotVel, NetworkId net=INVALID_NETWORK_ID);
 //I FUCKING LOVE PHILOSOPHER'S STONE!
-flecs::entity createMoneyAsteroid(vector3df position, vector3df rotation, vector3df scale, f32 startVel = 0, f32 startRotVel = 0);
-flecs::entity createCashNugget(vector3df position, vector3df rotation, vector3df scale, f32 startVel = 0, f32 startRotVel = 0);
+flecs::entity createMoneyAsteroid(vector3df position, vector3df rotation, vector3df scale, f32 startVel = 0, f32 startRotVel = 0, NetworkId net=INVALID_NETWORK_ID);
+flecs::entity createCashNugget(vector3df position, vector3df rotation, vector3df scale, f32 startVel = 0, f32 startRotVel = 0, NetworkId net = INVALID_NETWORK_ID);
 
 //Creates engine debris at the given position. Includes health, irrlicht, rigid body and thrust components. Returns the ID.
-flecs::entity createEngineDebris(vector3df position, vector3df rotation, vector3df scale, f32 mass);
+flecs::entity createEngineDebris(vector3df position, vector3df rotation, vector3df scale, f32 mass, NetworkId id = INVALID_NETWORK_ID);
 //Creates a supply box at the given position and sets up the supplies callback. Includes health, rigid body, and irrlicht components. Returns the ID.
 flecs::entity createSupplyBox(vector3df position, vector3df rotation, vector3df scale);
 //Creates a fuel tank at the given position and sets up the explosive death callback. Includes health, rigid body, and irrlicht components. Returns the ID.
@@ -44,6 +45,8 @@ flecs::entity createRandomShipDebris(vector3df position, vector3df rotation, vec
 
 flecs::entity createBeacon(vector3df pos, vector3df rot, vector3df scale);
 
+//Creates a weapon, minus its components, as an obstacle. Best used for picking up weaponry in the game.
+flecs::entity createWeaponAsObstacle(dataId which, HARDPOINT_TYPE type, vector3df pos, vector3df rot, vector3df scale, NetworkId net, bool sensPickup = false);
 //Creates a ship, minus all essential ship components, which can act as an obstacle. Includes obstacle component.
 flecs::entity createDeadShipAsObstacle(dataId which, vector3df pos, vector3df rot, dataId wepId);
 //Creates a dormant ship, without AI or any other components to make it *move*. Can be re-activated by adding on the necessary components. Does not include obstacle component.
@@ -68,11 +71,12 @@ flecs::entity createRandomCloud(vector3df position, vector3df scale);
 flecs::entity createRolledCloud(vector3df position, vector3df scale, u32 roll);
 flecs::entity createGravityAnomaly(vector3df position, vector3df scale);
 flecs::entity createDustCloud(vector3df position, vector3df scale);
+flecs::entity createCloudFromId(dataId id, vector3df position, vector3df scale, NetworkId net=INVALID_NETWORK_ID);
 
 flecs::entity createStaticMeshCloud(vector3df position, vector3df rotation, vector3df scale, SColor innerColor=(255,255,255,255), SColor outerColor=(0,255,255,255));
 
 //Creates a stasis pod at the given position with nothing particularly interesting about it.
-flecs::entity createStasisPod(vector3df position, vector3df rotation);
+flecs::entity createStasisPod(vector3df position, vector3df rotation, NetworkId net=INVALID_NETWORK_ID);
 //Creates some debris at the given position. Returns the ID.
 flecs::entity createDebris(vector3df position, vector3df rotation, vector3df scale, f32 mass);
 
@@ -90,6 +94,9 @@ void hugeRockJumpscareHitCb(flecs::entity attacker, flecs::entity rockShip);
 void createMinefield(std::vector<vector3df> positions, vector3df scale);
 //Builds a minefield at the given position, getting random positions within the radius until out of mines.
 void createRandomMinefield(vector3df position, vector3df scale, u32 numMines=35, f32 radius=500.f);
+
+MapGenObstacle createMapGenObstacleFromEntity(flecs::entity ent);
+flecs::entity createObstacleFromMapGen(MapGenObstacle obst);
 
 //Callback for when a gas cloud blows up. Stand back.
 void deathExplosion(flecs::entity id);
@@ -109,6 +116,8 @@ void stasisPodCollect(flecs::entity id);
 void iceSplitExplosion(flecs::entity id);
 //Death callback for money rocks.
 void moneySplitExplosion(flecs::entity id);
+//Death callback for picking up a weapon from the game.
+void weaponPickupDeath(flecs::entity id);
 //Callback for when an engine is hit by a bullet and it flies off into the void.
 void onHitDebrisEngineTakeoff(flecs::entity target, flecs::entity attacker);
 #endif 

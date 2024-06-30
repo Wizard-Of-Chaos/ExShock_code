@@ -19,9 +19,11 @@
 #include "IrrlichtComponent.h"
 #include "GameFunctions.h"
 #include "CrashLogger.h"
+#include "NetworkingComponent.h"
+#include "StationModuleUtils.h"
 #include "Shaders.h"
 
-flecs::entity createDynamicObstacle(u32 id, vector3df position, vector3df rotation, vector3df scale, f32 mass, f32 startLinVel, f32 startRotVel, bool startActivated)
+flecs::entity createDynamicObstacle(u32 id, vector3df position, vector3df rotation, vector3df scale, f32 mass, f32 startLinVel, f32 startRotVel, bool startActivated, NetworkId net)
 {
 	auto obstacle = game_world->entity();
 
@@ -41,17 +43,18 @@ flecs::entity createDynamicObstacle(u32 id, vector3df position, vector3df rotati
 		n->getMesh()->setHardwareMappingHint(EHM_STATIC);
 	}
 	btVector3 btscale(irrVecToBt(scale));
-	initializeBtConvexHull(obstacle, assets->getHull(obstacleData[id]->name), btscale, mass, startLinVel, startRotVel);
+	initializeBtConvexHull(obstacle, assets->getHull(obstacleData[id]->name), btscale, mass, startLinVel, startRotVel, net);
 	auto rbc = obstacle.get_mut<BulletRigidBodyComponent>();
 	if(startLinVel == 0 && startRotVel == 0) rbc->rigidBody->setActivationState(0);
 	if (startActivated) rbc->rigidBody->setActivationState(1);
 	//initializeHealth(obstacle, obstacleData[id]->health);
+
 	return obstacle;
 
 }
-flecs::entity createStaticObstacle(u32 id, vector3df position, vector3df rotation, vector3df scale)
+flecs::entity createStaticObstacle(u32 id, vector3df position, vector3df rotation, vector3df scale, NetworkId net)
 {
-	return createDynamicObstacle(id, position, rotation, scale, 0, 0, 0);
+	return createDynamicObstacle(id, position, rotation, scale, 0, 0, 0, false, net);
 }
 
 flecs::entity createAsteroid(vector3df position, vector3df rotation, vector3df scale, f32 mass, f32 startVel, f32 startRotVel)
@@ -62,16 +65,16 @@ flecs::entity createAsteroid(vector3df position, vector3df rotation, vector3df s
 	return roid;
 }
 
-flecs::entity createMoneyAsteroid(vector3df position, vector3df rotation, vector3df scale, f32 startVel, f32 startRotVel)
+flecs::entity createMoneyAsteroid(vector3df position, vector3df rotation, vector3df scale, f32 startVel, f32 startRotVel, NetworkId net)
 {
-	auto roid = createDynamicObstacle(22, position, rotation, scale, scale.X, startVel, startRotVel);
+	auto roid = createDynamicObstacle(22, position, rotation, scale, scale.X, startVel, startRotVel, net);
 	gameController->registerDeathCallback(roid, moneySplitExplosion);
 	return roid;
 }
 
-flecs::entity createCashNugget(vector3df position, vector3df rotation, vector3df scale, f32 startVel, f32 startRotVel)
+flecs::entity createCashNugget(vector3df position, vector3df rotation, vector3df scale, f32 startVel, f32 startRotVel, NetworkId net)
 {
-	auto cash = createDynamicObstacle(41, position, rotation, scale, scale.X, startVel, startRotVel, true);
+	auto cash = createDynamicObstacle(41, position, rotation, scale, scale.X, startVel, startRotVel, true, net);
 	gameController->registerDeathCallback(cash, supplyBoxDeath);
 	AIComponent ai;
 	auto mineAI = new MineAI();
@@ -87,9 +90,9 @@ flecs::entity createCashNugget(vector3df position, vector3df rotation, vector3df
 	return cash;
 }
 
-flecs::entity createIceAsteroid(vector3df position, vector3df rotation, vector3df scale, f32 startVel, f32 startRotVel, bool split)
+flecs::entity createIceAsteroid(vector3df position, vector3df rotation, vector3df scale, f32 startVel, f32 startRotVel, bool split, NetworkId networkId)
 {
-	auto roid = createDynamicObstacle(34, position, rotation, scale, scale.X, startVel, startRotVel);
+	auto roid = createDynamicObstacle(34, position, rotation, scale, scale.X, startVel, startRotVel, false, networkId);
 	auto hp = roid.get_mut<HealthComponent>();
 
 	auto irr = roid.get<IrrlichtComponent>();
@@ -131,9 +134,9 @@ flecs::entity createHugeAsteroid(vector3df position, vector3df rotation, vector3
 	return roid;
 }
 
-flecs::entity createRadioactiveAsteroid(vector3df position, vector3df rotation, vector3df scale, f32 startVel, f32 startRotVel)
+flecs::entity createRadioactiveAsteroid(vector3df position, vector3df rotation, vector3df scale, f32 startVel, f32 startRotVel, NetworkId net)
 {
-	auto roid = createDynamicObstacle(11, position, rotation, scale, scale.X, startVel, startRotVel);
+	auto roid = createDynamicObstacle(11, position, rotation, scale, scale.X, startVel, startRotVel, net);
 
 	auto irr = roid.get_mut<IrrlichtComponent>();
 	
@@ -169,9 +172,9 @@ void createAsteroidSwarm(vector3df position, vector3df rotation, vector3df scale
 	}
 }
 
-flecs::entity createEngineDebris(vector3df position, vector3df rotation, vector3df scale, f32 mass)
+flecs::entity createEngineDebris(vector3df position, vector3df rotation, vector3df scale, f32 mass, NetworkId id)
 {
-	auto engine = createDynamicObstacle(5, position, rotation, scale, mass);
+	auto engine = createDynamicObstacle(5, position, rotation, scale, mass, 0.f, 0.f, false, id);
 	gameController->registerHitCallback(engine, onHitDebrisEngineTakeoff);
 	ThrustComponent thrust;
 	//thrust.ambient = audioDriver->playGameSound(engine, "hazard_broken_idle.ogg", 1.f, 20.f, 1000.f, true);
@@ -237,6 +240,41 @@ flecs::entity createDeadShipAsObstacle(dataId which, vector3df pos, vector3df ro
 flecs::entity createDormantShipAsObstacle(dataId which, vector3df pos, vector3df rot, dataId wepId)
 {
 	return createShip(which, wepId, pos, rot, false);
+}
+
+flecs::entity createWeaponAsObstacle(dataId which, HARDPOINT_TYPE type, vector3df pos, vector3df rot, vector3df scale, NetworkId net, bool sensPickup)
+{
+	flecs::entity wep = game_world->entity();
+	loadWeapon(which, wep, type);
+
+	wep.remove<WeaponFiringComponent>();
+
+	auto irr = wep.get<IrrlichtComponent>();
+	irr->node->setScale(scale);
+	auto sphere = new btSphereShape(scale.X/3.f);
+	btVector3 btScaleInternal = btVector3(1.f, 1.f, 1.f);
+	initBtRBC(wep, sphere, btScaleInternal, 50.f, 0.f, 0.f, net);
+
+	ObstacleComponent obst;
+	obst.type = DEAD_WEAPON;
+	obst.obstacleDataId = which;
+
+	if (sensPickup) {
+		gameController->registerDeathCallback(wep, weaponPickupDeath);
+		AIComponent ai;
+		auto mineAI = new MineAI();
+		mineAI->self = wep;
+		ai.aiControls = std::shared_ptr<AIType>(mineAI);
+		ThrustComponent thrust;
+		HardpointComponent hards;
+		wep.set<AIComponent>(ai);
+		wep.set<ThrustComponent>(thrust);
+		wep.set<HardpointComponent>(hards);
+		initializeNeutralFaction(wep);
+		initializeSensors(wep, 100.f, DEFAULT_SENSOR_UPDATE_INTERVAL, true);
+	}
+
+	return wep;
 }
 
 flecs::entity createMine(vector3df position, vector3df rotation, vector3df scale, FACTION_TYPE triggeredBy, bool flashing)
@@ -305,9 +343,9 @@ flecs::entity createDebrisTurret(vector3df position, vector3df rotation, vector3
 	return createTurret(0, 3, position, rotation, FACTION_UNCONTROLLED, scale);
 }
 
-flecs::entity createStasisPod(vector3df position, vector3df rotation)
+flecs::entity createStasisPod(vector3df position, vector3df rotation, NetworkId net)
 {
-	auto pod = createDynamicObstacle(0, position, rotation, vector3df(2.f, 2.f, 2.f), 300.f, 0.f, .2f);
+	auto pod = createDynamicObstacle(0, position, rotation, vector3df(2.f, 2.f, 2.f), 300.f, 0.f, .2f, false, net);
 	gameController->registerDeathCallback(pod, stasisPodCollect);
 	AIComponent ai;
 	auto mineAI = new MineAI();
@@ -400,9 +438,9 @@ flecs::entity createRandomShipDebris(vector3df position, vector3df rotation, vec
 
 }
 
-flecs::entity createExplosiveAsteroid(vector3df position, vector3df rotation, vector3df scale, f32 mass)
+flecs::entity createExplosiveAsteroid(vector3df position, vector3df rotation, vector3df scale, f32 mass, NetworkId net)
 {
-	auto id = createDynamicObstacle(2,position, rotation, scale, mass);
+	auto id = createDynamicObstacle(2,position, rotation, scale, mass, 0, 0, false, net);
 	gameController->registerDeathCallback(id, deathExplosion);
 	return id;
 }
@@ -442,6 +480,38 @@ void hugeRockJumpscare(flecs::entity rockShip)
 void hugeRockJumpscareHitCb(flecs::entity rockShip, flecs::entity attacker)
 {
 	hugeRockJumpscare(rockShip);
+}
+
+flecs::entity createCloudFromId(dataId id, vector3df position, vector3df scale, NetworkId net)
+{
+	flecs::entity ret = INVALID_ENTITY;
+	switch (id) {
+	case 33:
+		ret = createDustCloud(position, scale);
+		break;
+	case 1:
+		ret = createExplosiveCloud(position, scale);
+		break;
+	case 17:
+		ret = createShieldDrainCloud(position, scale);
+		break;
+	case 18:
+		ret = createGravityAnomaly(position, scale);
+		break;
+	case 19:
+		ret = createSpeedBoostCloud(position, scale);
+		break;
+	case 20:
+		ret = createSlowDownCloud(position, scale);
+		break;
+	default:
+		ret = createDustCloud(position, scale);
+		break;
+	}
+	if (ret != INVALID_ENTITY) {
+		initializeNetworkingComponent(ret, 1, net);
+	}
+	return ret;
 }
 
 flecs::entity createDustCloud(vector3df position, vector3df scale)
@@ -710,6 +780,134 @@ flecs::entity createRolledCloud(vector3df position, vector3df scale, u32 origina
 	else return createExplosiveCloud(position, scale);
 }
 
+static void _getRBCData(flecs::entity e, MapGenObstacle& gen)
+{
+	if (!e.has<BulletRigidBodyComponent>() || !e.has<IrrlichtComponent>())
+		return;
+	auto body = e.get<BulletRigidBodyComponent>()->rigidBody;
+	auto node = e.get<IrrlichtComponent>()->node;
+
+	gen.mass = body->getMass();
+	gen.scale = node->getScale();
+
+	btTransform motionStateTransform;
+	body->getMotionState()->getWorldTransform(motionStateTransform);
+	gen.position = btVecToIrr(motionStateTransform.getOrigin());
+	btVector3 eulerOrientation;
+	QuaternionToEuler(motionStateTransform.getRotation(), eulerOrientation);
+	gen.rotation = btVecToIrr(eulerOrientation);
+	gen.startLinVel = body->getLinearVelocity().length();
+	gen.startRotVel = body->getAngularVelocity().length();
+}
+
+MapGenObstacle createMapGenObstacleFromEntity(flecs::entity ent)
+{
+	if (!ent.has<ObstacleComponent>() || !ent.has<NetworkingComponent>())
+		return MapGenObstacle();
+	MapGenObstacle ret;
+	auto obst = ent.get<ObstacleComponent>();
+	auto net = ent.get<NetworkingComponent>();
+	ret.id = obst->obstacleDataId;
+	ret.type = obst->type;
+	ret.networkId = net->networkedId;
+	if (ent.has<FactionComponent>())
+		ret.faction = ent.get<FactionComponent>()->type;
+
+	switch (obst->type) {
+	case ASTEROID:
+	case DEBRIS:
+	case JET_DEBRIS:
+	case MONEY_ASTEROID:
+	case CASH_NUGGET:
+	case STASIS_POD:
+	case DERELICT_STATION_MODULE:
+	case MINE:
+	case MISSILE:
+	case HAYWIRE_TURRET:
+	case RADIOACTIVE_ASTEROID: {
+		_getRBCData(ent, ret);
+		break;
+	}
+	case ICE_ASTEROID:
+		_getRBCData(ent, ret);
+		ret.extraFloats[0] = gameController->hasDeathCallback(ent);
+		break;
+	case FLAT_BILLBOARD:
+	case FLAT_BILLBOARD_ANIMATED:
+	case GAS_CLOUD: {
+		auto ghost = ent.get<BulletGhostComponent>()->ghost;
+		auto node = ent.get<IrrlichtComponent>()->node;
+		ret.position = btVecToIrr(ghost->getWorldTransform().getOrigin());
+		ret.scale = node->getScale();
+		break;
+	}
+	case DEAD_SHIP: {
+		_getRBCData(ent, ret);
+		break;
+	}
+	case DEAD_WEAPON: {
+		_getRBCData(ent, ret);
+		break;
+	}
+	case STATION_MODULE: {
+		_getRBCData(ent, ret);
+		if (ent.has<StationModuleComponent>()) {
+			auto mod = ent.get<StationModuleComponent>();
+
+			if(!ent.has<StationModuleOwnerComponent>())
+				ret.extraFloats[0] = mod->ownedBy.get<NetworkingComponent>()->networkedId;
+
+			ret.extraFloats[1] = mod->connectedOn;
+
+			if (mod->connectedEntities[0] != INVALID_ENTITY)
+				ret.extraFloats[2] = mod->connectedEntities[0].get<NetworkingComponent>()->networkedId;
+			if (mod->connectedEntities[1] != INVALID_ENTITY)
+				ret.extraFloats[3] = mod->connectedEntities[0].get<NetworkingComponent>()->networkedId;
+			if (mod->connectedEntities[2] != INVALID_ENTITY)
+				ret.extraFloats[4] = mod->connectedEntities[0].get<NetworkingComponent>()->networkedId;
+			if (mod->connectedEntities[3] != INVALID_ENTITY)
+				ret.extraFloats[5] = mod->connectedEntities[0].get<NetworkingComponent>()->networkedId;
+		}
+	}
+	default:
+		break;
+	}
+	return ret;
+}
+
+flecs::entity createObstacleFromMapGen(MapGenObstacle obst)
+{
+	switch (obst.type) {
+		case ASTEROID:
+		case DEBRIS: {
+			return createDynamicObstacle(obst.id, obst.position, obst.rotation, obst.scale, obst.mass, obst.startLinVel, obst.startRotVel, false, obst.networkId);
+		}
+		case JET_DEBRIS: {
+			return createEngineDebris(obst.position, obst.rotation, obst.scale, obst.mass, obst.networkId);
+		}
+		case ICE_ASTEROID:
+			return createIceAsteroid(obst.position, obst.rotation, obst.scale, obst.startLinVel, obst.startRotVel, obst.extraFloats[0], obst.networkId);
+		case RADIOACTIVE_ASTEROID:
+			return createRadioactiveAsteroid(obst.position, obst.rotation, obst.scale, obst.startLinVel, obst.startRotVel, obst.networkId);
+		case MONEY_ASTEROID:
+			return createMoneyAsteroid(obst.position, obst.rotation, obst.scale, obst.startLinVel, obst.startRotVel, obst.networkId);
+		case CASH_NUGGET:
+			return createCashNugget(obst.position, obst.rotation, obst.scale, obst.startLinVel, obst.startRotVel, obst.networkId);
+		case GAS_CLOUD:
+			return createCloudFromId(obst.id, obst.position, obst.rotation, obst.networkId);
+		case STASIS_POD:
+			return createStasisPod(obst.position, obst.rotation, obst.networkId);
+		case EXPLOSIVE_ASTEROID:
+			return createExplosiveAsteroid(obst.position, obst.rotation, obst.scale, obst.mass, obst.networkId);
+		case DERELICT_STATION_MODULE:
+			return createLooseHumanModule(obst.position, obst.rotation, obst.scale, obst.id, obst.networkId);
+		default:
+			break;
+	}
+
+	baedsLogger::errLog("Invalid obstacle from network - data ID: " + std::to_string(obst.id) + ", network ID: " + std::to_string(obst.networkId) + ", type: " + std::to_string(obst.type) + "\n");
+	return INVALID_ENTITY;
+}
 
 void deathExplosion(flecs::entity id)
 {
@@ -835,6 +1033,14 @@ void supplyBoxDeath(flecs::entity id)
 	u32 amount = random.urange(2U, 10U);
 	campaign->addAmmo(amount);
 	audioDriver->playGameSound(id, "reload.ogg");
+}
+
+void weaponPickupDeath(flecs::entity id)
+{
+	auto obst = id.get<ObstacleComponent>();
+	auto wep = id.get<WeaponInfoComponent>();
+	campaign->createNewWeaponInstance(*wep);
+	audioDriver->playGameSound(id, "supplies.ogg");
 }
 
 void onHitDebrisEngineTakeoff(flecs::entity target, flecs::entity attacker)

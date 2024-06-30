@@ -26,7 +26,7 @@ void healthSystem(flecs::iter it, HealthComponent* hc)
 			if (e.has<PlayerComponent>())
 			{
 				gameController->isPlayerAlive = false;
-				stateController->setState(GAME_FINISHED);
+				//stateController->setState(GAME_FINISHED);
 			}
 			if (gameController->isNetworked()) {
 				if (clientOwnsThisEntity(e))
@@ -39,7 +39,7 @@ void healthSystem(flecs::iter it, HealthComponent* hc)
 				destroyObject(e);
 		}
 		hp->timeSinceLastHit += it.delta_time();
-		if (hp->healthRegen > 0.f) {
+		if (hp->healthRegen > 0.f && hp->health < hp->maxHealth) {
 			hp->health += hp->healthRegen * it.delta_time();
 		}
 		if (hp->maxShields == 0.f) continue;

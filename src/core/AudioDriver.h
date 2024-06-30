@@ -27,9 +27,15 @@ class AudioDriver
 		void stopMusic(u32 track = 0);
 		//Sets the gain on the music track.
 		void setMusicGain(u32 track, f32 gain);
+		const f32& getMusicGain(u32 track) const { return musicGains[track]; }
 		
 		//Fades out the first track, and then fades in the second track.
 		void fadeTracks(u32 trackToFade, u32 trackToGain, f32 timeToFade=1.f, f32 fadingTrackGainTarget=0.f, f32 gainingTrackGainTarget=1.f);
+		//Fades out the track.
+		void fadeTrack(u32 trackToFade, f32 timeToFade = 1.f, f32 fadeTarget = 0.f);
+		//Gains the track.
+		void gainTrack(u32 trackToGain, f32 timeToGain = 1.f, f32 gainTarget = 1.f);
+		//Clears all fades.
 		void clearFades();
 		//Sets the listener position, including up values and forward velocity.
 		void setListenerPosition(vector3df pos, vector3df up = vector3df(0,1,0), vector3df forward = vector3df(0,0,-1), btVector3 vel = btVector3(0,0,0));
@@ -67,6 +73,7 @@ class AudioDriver
 		f32 menuGain = 1.f;
 
 		struct _trackfade {
+			bool singleTrack = false;
 			u32 fadingTrack = 0;
 			f32 fadingTrackGainTarget = 0.f;
 			u32 gainingTrack = 0;
@@ -74,6 +81,7 @@ class AudioDriver
 			f32 timeToFade = 0.f;
 			f32 elapsedTime = 0.f;
 			bool halftime = false;
+			bool isGaining = false;
 			const f32 getFade() const  {
 				return std::max(0.f, (1.f - (elapsedTime / timeToFade)));
 			}

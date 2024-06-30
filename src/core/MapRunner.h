@@ -30,6 +30,8 @@ class MapRunner
 		std::vector<MapGenObstacle>& mapObstacles() { return m_mapObstacles; }
 		void addShipToMapShips(MapGenShip ship) { m_mapShips.push_back(ship); }
 		void addObstacleToMapObstacles(MapGenObstacle obstacle) { m_mapObstacles.push_back(obstacle); }
+		const std::vector<vector3df>& const objectiveStartPos() { return m_objectivesStartPos; }
+		flecs::entity radioSignal;
 
 	private:
 		struct _corridor {
@@ -130,6 +132,8 @@ class MapRunner
 		void m_arthur();
 		void m_james();
 
+		void m_tutorial();
+
 		std::shared_ptr<Objective> m_getCleanup();
 		void m_setRadioSignals(ObjElem& obj);
 
@@ -137,7 +141,6 @@ class MapRunner
 		std::vector<MapGenShip> m_mapShips;
 		std::vector<MapGenObstacle> m_mapObstacles;
 		//Scenario m_builtScenario;
-		flecs::entity radioSignal;
 
 		s32 m_regAce = 4;
 		s32 m_regShip = 1;

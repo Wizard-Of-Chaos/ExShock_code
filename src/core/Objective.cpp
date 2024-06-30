@@ -12,7 +12,8 @@ const std::unordered_map<OBJECTIVE_TYPE, std::string> objNameStrings = {
 	{OBJ_GO_TO, "Move To"},
 	{OBJ_ESCORT, "Escort"},
 	{OBJ_CAPTURE, "Capture"},
-	{OBJ_PROTECT, "Protect"}
+	{OBJ_PROTECT, "Protect"},
+	{OBJ_TUTORIAL, "tutorial"}
 };
 
 const bool Objective::isObjOver(f32 dt) {
@@ -245,6 +246,28 @@ const bool ProtectObjective::success()
 {
 	for (auto& ent : targets) {
 		if (!ent.is_alive()) return false;
+	}
+	return true;
+}
+
+const bool KeyPressObjective::objectiveUpdate()
+{
+	auto player = gameController->getPlayer();
+	auto in = player.get<InputComponent>();
+	for (u32 i = 0; i < IN_MAX_ENUM; ++i) {
+		if (!inputsRequired[i])
+			continue;
+		if (in->isKeyDown((INPUT)i))
+			inputsTriggered[i] = true; //trigger it but don't revert it
+	}
+	return success();
+}
+
+const bool KeyPressObjective::success()
+{
+	for (u32 i = 0; i < IN_MAX_ENUM; ++i) {
+		if (inputsRequired[i] && !inputsTriggered[i])
+			return false;
 	}
 	return true;
 }

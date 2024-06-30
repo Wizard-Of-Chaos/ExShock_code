@@ -17,6 +17,9 @@ bool wepFire_railgun(WeaponInfoComponent* wep, WeaponFiringComponent* fire, Powe
 bool wepFire_laser(WeaponInfoComponent* wep, WeaponFiringComponent* fire, PowerComponent* power, flecs::entity wepId, f32 dt, Network_ShotFired* chaser = nullptr);
 bool wepFire_thickLaser(WeaponInfoComponent* wep, WeaponFiringComponent* fire, PowerComponent* power, flecs::entity wepId, f32 dt, Network_ShotFired* chaser = nullptr);
 bool wepFire_goron(WeaponInfoComponent* wep, WeaponFiringComponent* fire, PowerComponent* power, flecs::entity wepId, f32 dt, Network_ShotFired* chaser = nullptr);
+bool wepFire_electron(WeaponInfoComponent* wep, WeaponFiringComponent* fire, PowerComponent* power, flecs::entity wepId, f32 dt, Network_ShotFired* chaser = nullptr);
+bool wepFire_physShield(WeaponInfoComponent* wep, WeaponFiringComponent* fire, PowerComponent* power, flecs::entity wepId, f32 dt, Network_ShotFired* chaser = nullptr);
+bool wepFire_alienHealth(WeaponInfoComponent* wep, WeaponFiringComponent* fire, PowerComponent* power, flecs::entity wepId, f32 dt, Network_ShotFired* chaser = nullptr);
 
 //Creates an explosion at the impact point of a projectile. Way smaller than the other one.
 void projectileImpactCallback(flecs::entity id);

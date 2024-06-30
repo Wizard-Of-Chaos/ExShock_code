@@ -70,6 +70,45 @@ namespace irr
 			return done;
 		}
 
+		void CSceneNodeScalePulseStaggeredAnimator::animateNode(ISceneNode* node, u32 timeMs)
+		{
+			u32 diff = timeMs - then;
+			dt += diff;
+			then = timeMs;
+
+			if (!pulseComplete) {
+				f32 percentage = ((f32)dt / (f32)pulseTime);
+				core::vector3df startScale, desiredScale;
+				if (isExpanding) {
+					desiredScale = maxScale;
+					startScale = minScale;
+				}
+				else {
+					desiredScale = minScale;
+					startScale = maxScale;
+				}
+				core::vector3df newScale = core::lerp(desiredScale, startScale, percentage);
+				node->setScale(newScale);
+				if (dt >= pulseTime) {
+					isExpanding = !isExpanding;
+					dt = 0;
+					if (!looped) done = true;
+					pulseComplete = !pulseComplete;
+				}
+			}
+			else {
+				if (dt >= pulseTimeBetween) {
+					pulseComplete = !pulseComplete;
+					dt = 0;
+				}
+			}
+		}
+		ISceneNodeAnimator* CSceneNodeScalePulseStaggeredAnimator::createClone(ISceneNode* node, ISceneManager* newManager)
+		{
+			CSceneNodeScalePulseStaggeredAnimator* anim = new CSceneNodeScalePulseStaggeredAnimator(then, minScale, maxScale, pulseTime, pulseTimeBetween, looped, smgr);
+			return anim;
+		}
+
 		void CScaleToNothingAndDeleteAnimator::animateNode(ISceneNode* node, u32 timeMs)
 		{
 			f32 completion = (f32)((f32)(timeMs - then) / (f32)fadeTime);

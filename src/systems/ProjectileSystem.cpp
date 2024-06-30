@@ -5,6 +5,7 @@
 #include "CrashLogger.h"
 #include "IrrlichtComponent.h"
 #include "GameFunctions.h"
+#include "GameController.h"
 
 void projectileSystem(flecs::iter it, BulletRigidBodyComponent* rbcs, ProjectileInfoComponent* pic, IrrlichtComponent* irrs)
 {
@@ -26,7 +27,8 @@ void projectileSystem(flecs::iter it, BulletRigidBodyComponent* rbcs, Projectile
 
 		//note: incredibly stupid hack because there's sometimes a weird error where projectiles aren't facing the correct direction on the frame they're spawned
 		//projectiles spawn as invisible and then get set visible on the first frame after they've had their collision body adjusted
-		irr->node->setVisible(true);
+		if(proj->currentLifetime > gameController->getDt()*2.f)
+			irr->node->setVisible(true);
 
 		//TODO: make this a fucking animator for gods sake
 		f32 percentTotalLifetime = (proj->currentLifetime / proj->lifetime);

@@ -27,7 +27,8 @@ struct PlayerComponent
 	//values for how much the camera swings around
 	f32 slerpFactor = .009f;
 	f32 velocityFactor = .02f;
-	f32 timeSinceLastOrder = 0;
+	f32 timeSinceLastOrder = 0.f;
+	f32 inputTimeDelay = 0.f;
 	//identical to the one for AI
 	flecs::entity beingTargetedBy = INVALID_ENTITY;
 };

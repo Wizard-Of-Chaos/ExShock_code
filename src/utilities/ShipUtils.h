@@ -24,7 +24,7 @@ void setArtillery(flecs::entity ship);
 //Initializes a weapon component on the ship entity, set to the hardpoint specified. Phys bool is for physics weapons.
 //Example: The "Tsunami LMG" has the weapon id 3. Pass in 3 to this function to load a Tsunami LMG onto the hardpoint.
 //If you want to load a physics weapon set the bool to "true".
-bool initializeWeaponFromId(u32 id, flecs::entity shipId, int hardpoint, HARDPOINT_TYPE type=HRDP_REGULAR, flecs::entity_t entityId=INVALID_ENTITY_ID);
+bool initializeWeaponFromId(u32 id, flecs::entity shipId, int hardpoint, HARDPOINT_TYPE type=HRDP_REGULAR, NetworkId networkId=INVALID_NETWORK_ID);
 
 bool initializeWeaponfromArchetype(dataId archetype, flecs::entity shipId, int hardpoint, HARDPOINT_TYPE type = HRDP_REGULAR);
 
@@ -80,6 +80,7 @@ std::list<flecs::entity> spawnScenarioWing(vector3df pos, vector3df rot, u32 shi
 //Builds a ship from a map generating object.
 flecs::entity createShipFromMapGen(MapGenShip ship);
 
+void fighterDeathSpiralCallback(flecs::entity id);
 //The death callback used by fighters, a loud noise and a small bang.
 void fighterDeathExplosionCallback(flecs::entity id);
 #endif 

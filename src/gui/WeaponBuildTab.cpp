@@ -2,6 +2,7 @@
 #include "GuiController.h"
 #include "Campaign.h"
 #include <iostream>
+#include "AudioDriver.h"
 
 void WeaponBuildTab::build(IGUIElement* root, GuiDialog* dial, MENU_TYPE which)
 {
@@ -301,12 +302,18 @@ bool WeaponBuildTab::onConfirm(const SEvent& event)
 		}
 		campaign->removeSupplies(dat->buildCost);
 		campaign->createNewWeaponInstance(dat->wepComp);
+		audioDriver->playMenuSound("item_build.ogg");
 	}
 	else {
 		WeaponInstance* wep = campaign->getWeapon(currentSelection);
 		if (!wep) return true; //the hell?
 		if (wep->usedBy > -1) {
 			guiController->setOkPopup("Weapon In Use", "This weapon is currently in use. Take it off before scrapping. \n\n Wait, how'd you do that? This shouldn't display.", "Owned");
+			guiController->showOkPopup();
+			return false;
+		}
+		if (wep->wep.wepDataId == 30) {
+			guiController->setOkPopup("Excalibur", "This weapon may only be properly disposed of by the Lady of the Lake.");
 			guiController->showOkPopup();
 			return false;
 		}
@@ -323,6 +330,7 @@ bool WeaponBuildTab::onConfirm(const SEvent& event)
 			return false;
 		}
 		//all clear
+		audioDriver->playMenuSound("item_scrap.ogg");
 		campaign->removeWeapon(wep);
 		confirm->setVisible(false);
 		m_wipe();

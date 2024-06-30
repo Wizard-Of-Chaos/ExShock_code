@@ -44,7 +44,7 @@ enum INPUT {
 	IN_COMMS_4,
 	IN_COMMS_5,
 	IN_COMMS_6,
-	IN_COMMS_7,
+	SUMMON_CHAOS_THEORY,
 	IN_MAX_ENUM //doubles as error
 };
 /*

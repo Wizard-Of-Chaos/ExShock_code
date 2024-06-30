@@ -17,6 +17,8 @@
 #include "GameFunctions.h"
 #include "CrashLogger.h"
 #include "ShipParticleComponent.h"
+#include "PhysShieldComponent.h"
+
 
 static void readTurretData(gvReader& in, TurretHardpointComponent& turr)
 {
@@ -795,7 +797,7 @@ dataId loadTurretArchetypeData(std::string path)
 	return arch->archetypeId;
 }
 
-bool loadShip(u32 id, flecs::entity entity, vector3df pos, vector3df rot, bool initializeParticles)
+bool loadShip(u32 id, flecs::entity entity, vector3df pos, vector3df rot, bool initializeParticles, NetworkId networkId)
 {
 	ShipData* data = shipData[id];
 	//if (carrier) data = carrierData[id];
@@ -829,11 +831,6 @@ bool loadShip(u32 id, flecs::entity entity, vector3df pos, vector3df rot, bool i
 	irr.node->setMaterialFlag(EMF_FOG_ENABLE, true);
 	if (cfg->vid.toggles[TOG_FILTER]) irr.node->setMaterialFlag(EMF_TRILINEAR_FILTER, true);
 	if (cfg->vid.toggles[TOG_ANISOTROPIC]) irr.node->setMaterialFlag(EMF_ANISOTROPIC_FILTER, true);
-	if (cfg->vid.toggles[TOG_STENCILBUF]) {
-		IMeshSceneNode* node = (IMeshSceneNode*)irr.node;
-		auto shadow = node->addShadowVolumeSceneNode();
-		shadow->setID(ID_IsNotSelectable);
-	}
 
 	//set up ECS stuff (the name of the node is the string corresponding to the entity)
 	irr.node->setName(idToStr(entity).c_str());
@@ -874,11 +871,11 @@ bool loadShip(u32 id, flecs::entity entity, vector3df pos, vector3df rot, bool i
 	scale = irrVecToBt(data->scale);
 	mass = data->mass;
 
-	initializeBtConvexHull(entity, hull, scale, mass);
+	initializeBtConvexHull(entity, hull, scale, mass, 0, 0, networkId);
 	if (initializeParticles) initializeShipParticles(entity);
 	else entity.set<ShipParticleComponent>(ShipParticleComponent());
 	if(data->hasHangar) gameController->registerDeathCallback(entity, carrierDeathExplosionCallback);
-	else gameController->registerDeathCallback(entity, fighterDeathExplosionCallback);
+	else gameController->registerDeathCallback(entity, fighterDeathSpiralCallback);
 
 	return true;
 }
@@ -978,6 +975,10 @@ bool loadWeapon(u32 id, flecs::entity weaponEntity, HARDPOINT_TYPE type)
 	}
 	wep.particle = assets->getTexture(data->weaponEffect);
 
+	if (data->wepComp.type == WEP_PHYS_SHIELD) {
+		weaponEntity.set<PhysShieldComponent>(PhysShieldComponent());
+	}
+
 	fireComp.timeSinceLastShot = wep.firingSpeed;
 	if (wep.usesAmmunition) {
 		fireComp.clip = wep.maxClip;
@@ -1046,6 +1047,7 @@ bool loadObstacle(u32 id, flecs::entity entity)
 	if (!data) return false;
 	ObstacleComponent obst;
 	obst.type = data->type;
+	obst.obstacleDataId = id;
 
 	IrrlichtComponent irr;
 	entity.set_doc_name(data->name.c_str());
@@ -1110,10 +1112,6 @@ bool loadObstacle(u32 id, flecs::entity entity)
 	irr.node->setName(idToStr(entity).c_str());
 	if (cfg->vid.toggles[TOG_FILTER]) irr.node->setMaterialFlag(EMF_TRILINEAR_FILTER, true);
 	if (cfg->vid.toggles[TOG_ANISOTROPIC]) irr.node->setMaterialFlag(EMF_ANISOTROPIC_FILTER, true);
-	if (cfg->vid.toggles[TOG_STENCILBUF] && !nofog) {
-		IMeshSceneNode* node = (IMeshSceneNode*)irr.node;
-		node->addShadowVolumeSceneNode();
-	}
 
 	if(!nofog) irr.node->setMaterialFlag(EMF_FOG_ENABLE, true); //todo: gas shader that accounts for fog
 

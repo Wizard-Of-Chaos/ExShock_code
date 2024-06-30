@@ -5,7 +5,7 @@
 void WUIDamage::upgrade(flecs::entity inst)
 {
 	auto wep = inst.get_mut<WeaponInfoComponent>();
-	wep->damage += (wep->damage * value);
+	wep->multiplier += value;
 }
 
 void WUIFirerate::upgrade(flecs::entity inst)

@@ -18,8 +18,9 @@
 #include "CrashLogger.h"
 #include "MapRunner.h"
 #include "NetworkingComponent.h"
+#include "StatusEffects.h"
 
-bool initializeWeaponFromId(u32 id, flecs::entity shipId, int hardpoint, HARDPOINT_TYPE type, flecs::entity_t entityId)
+bool initializeWeaponFromId(u32 id, flecs::entity shipId, int hardpoint, HARDPOINT_TYPE type, NetworkId networkId)
 {
 	if (id <= 0) {
 		return false;
@@ -31,11 +32,7 @@ bool initializeWeaponFromId(u32 id, flecs::entity shipId, int hardpoint, HARDPOI
 	auto hards = shipId.get_mut<HardpointComponent>();
 
 	flecs::entity wepEntity = INVALID_ENTITY;
-	if (entityId != INVALID_ENTITY_ID) {
-		game_world->ensure(entityId);
-		wepEntity = game_world->entity(entityId);//creates a weapon entity that is a child of the ship entity
-	}
-	else wepEntity = game_world->entity();
+	wepEntity = game_world->entity();
 
 	wepEntity.add(flecs::ChildOf, shipId);
 	PowerComponent dummy;
@@ -66,6 +63,7 @@ bool initializeWeaponFromId(u32 id, flecs::entity shipId, int hardpoint, HARDPOI
 	}
 	irr->node->setScale(vector3df(.5f, .5f, .5f));
 	irr->node->updateAbsolutePosition();
+	initializeNetworkingComponent(wepEntity, 2U, networkId);
 	return true;
 }
 
@@ -514,7 +512,7 @@ flecs::entity createPlayerShip(vector3df pos, vector3df rot)
 	setDamageDifficulty(id);
 	IMeshSceneNode* node = (IMeshSceneNode*)id.get_mut<IrrlichtComponent>()->node;
 	node->setMaterialType(shaders->getShaderMaterial(SHADE_8LIGHT_NORM));
-
+	gameController->registerDeathCallback(id, fighterDeathExplosionCallback);
 	if (stateController->inCampaign) {
 		for (u32 i = 0; i < MAX_SHIP_UPGRADES; ++i) {
 			ShipInstance* inst = campaign->getPlayerShip();
@@ -645,7 +643,7 @@ MapGenShip::MapGenShip(flecs::entity ent, vector3df position, vector3df rotation
 	for (u32 i = 0; i < MAX_HARDPOINTS; ++i) {
 		hardpoints[i] = INVALID_DATA_ID;
 		wepArchetype[i] = false;
-		hardpointEntities[i] = INVALID_ENTITY_ID;
+		hardpointNetworkIds[i] = INVALID_NETWORK_ID;
 	}
 	this->position = position;
 	this->rotation = rotation;
@@ -661,43 +659,92 @@ MapGenShip::MapGenShip(flecs::entity ent, vector3df position, vector3df rotation
 			if (hards->weapons[i].is_alive()) {
 				auto wep = hards->weapons[i].get<WeaponInfoComponent>();
 				this->hardpoints[i] = wep->wepDataId;
-				this->hardpointEntities[i] = hards->weapons[i].id();
+				this->hardpointNetworkIds[i] = hards->weapons[i].get<NetworkingComponent>()->networkedId;
+				baedsLogger::log("gun network id: " + std::to_string(hardpointNetworkIds[i]) + "\n");
 			}
 		}
 		if (hards->physWeapon) {
 			auto wep = hards->physWeapon.get<WeaponInfoComponent>();
 			this->phys = wep->wepDataId;
-			this->physEntity = hards->physWeapon.id();
+			this->physNetworkId = hards->physWeapon.get<NetworkingComponent>()->networkedId;
 		}
 		if (hards->heavyWeapon) {
 			auto wep = hards->heavyWeapon.get<WeaponInfoComponent>();
 			this->heavy = wep->wepDataId;
-			this->heavyEntity = hards->heavyWeapon.id();
+			this->heavyNetworkId = hards->heavyWeapon.get<NetworkingComponent>()->networkedId;
 		}
 	}
-	entity = ent.id();
+	networkId = ent.get<NetworkingComponent>()->networkedId;
+
+	baedsLogger::log("SHIP NETWORK ID CONSTRUCTED: " + std::to_string(networkId) + "\n");
 }
 
 flecs::entity createShipFromMapGen(MapGenShip ship)
 {
-	flecs::entity id = INVALID_ENTITY;
-	baedsLogger::log("Ship ID from packet: " + std::to_string(ship.entity) + "\n");
-	game_world->ensure(ship.entity);
-	if (ship.entity != INVALID_ENTITY_ID) id = game_world->entity(ship.entity);
-	else id = game_world->entity();
-	baedsLogger::log("Building ship from mapgen with id " + std::to_string(id.id()) + "\n");
-	loadShip(ship.id, id, ship.position, ship.rotation);
+	flecs::entity id = game_world->entity();
+	auto data = shipData.at(ship.id);
+	loadShip(ship.id, id, ship.position, ship.rotation, true, ship.networkId);
 	if (id.has<HardpointComponent>()) {
 		auto hards = id.get<HardpointComponent>();
-		for (u32 i = 0; i < hards->hardpointCount; ++hards) {
-			if (ship.hardpoints[i] != INVALID_DATA_ID) initializeWeaponFromId(ship.hardpoints[i], id, i, HRDP_REGULAR, ship.hardpointEntities[i]);
+		baedsLogger::log("Gun network ids: ");
+		for (u32 i = 0; i < hards->hardpointCount; ++i) {
+			baedsLogger::log(std::to_string(ship.hardpointNetworkIds[i]) + ", ");
+			if (ship.hardpoints[i] != INVALID_DATA_ID) 
+				initializeWeaponFromId(ship.hardpoints[i], id, i, HRDP_REGULAR, ship.hardpointNetworkIds[i]);
+
 		}
-		if (ship.phys != INVALID_DATA_ID) initializeWeaponFromId(ship.phys, id, PHYS_HARDPOINT, HRDP_PHYSICS, ship.physEntity);
-		if (ship.heavy != INVALID_DATA_ID) initializeWeaponFromId(ship.heavy, id, HEAVY_HARDPOINT, HRDP_HEAVY, ship.heavyEntity);
+		baedsLogger::log("\n");
+
+		if (ship.phys != INVALID_DATA_ID) 
+			initializeWeaponFromId(ship.phys, id, PHYS_HARDPOINT, HRDP_PHYSICS, ship.physNetworkId);
+
+		if (ship.heavy != INVALID_DATA_ID) 
+			initializeWeaponFromId(ship.heavy, id, HEAVY_HARDPOINT, HRDP_HEAVY, ship.heavyNetworkId);
+	}
+	if (data->hasTurrets) {
+		auto turr = id.get_mut<TurretHardpointComponent>();
+		auto irr = id.get<IrrlichtComponent>();
+		for (u32 i = 0; i < MAX_TURRET_HARDPOINTS; ++i) {
+			turr->turrets[i] = createTurret(ship.turretIds[i], ship.turretWepIds[i], getTurretPosition(data->turr.turretPositions[i], irr->node),
+				data->turr.turretRotations[i], ship.faction, vector3df(turr->turretScale), i, id, ship.turretNetworkIds[i]);
+		}
 	}
 	initializeFaction(id, ship.faction);
-	if (id.has<NetworkingComponent>()) id.remove<NetworkingComponent>();
 	return id;
+}
+
+void fighterDeathSpiralCallback(flecs::entity id)
+{
+	if (!id.is_alive()) return;
+	if (!id.has<IrrlichtComponent>() || !id.has<BulletRigidBodyComponent>() || !id.has<FactionComponent>()) return;
+	auto irr = id.get<IrrlichtComponent>();
+	auto node = irr->node;
+	node->setID(ID_IsNotSelectable);
+	vector3df start = node->getAbsolutePosition();
+	vector3df pt1 = start + (getNodeForward(node) * random.frange(30.f, 100.f)) + (getNodeUp(node) * random.frange(3.f, 10.f));
+	vector3df pt2 = pt1 + (getNodeDown(node) * random.frange(-15.f, 15.f)) + (getNodeForward(node) * random.frange(40.f, 60.f));
+	vector3df pt3 = pt2 + (getNodeForward(node) * random.frange(40.f, 60.f)) + (getNodeRight(node) * random.frange(10.f, 20.f));
+
+	irr::core::array<vector3df> points;
+	points.push_back(start); points.push_back(pt1); points.push_back(pt2); points.push_back(pt3);
+
+	auto anim = smgr->createFollowSplineAnimator(device->getTimer()->getTime(), points, 1.f, .5f, false, false, false);
+	node->addAnimator(anim);
+	anim->drop();
+
+	anim = smgr->createRotationAnimator(vector3df(1.f, 0, 1.5f));
+	node->addAnimator(anim);
+	anim->drop();
+
+	auto ent = game_world->entity();
+	ent.set<IrrlichtComponent>(*irr);
+	ent.set<FactionComponent>(*id.get<FactionComponent>());
+	std::shared_ptr<StatusEffect> effect(new DelayedKillEffect);
+	effect->duration = 1.4f;
+	ent.get_mut<StatusEffectComponent>()->effects.push_back(effect);
+
+
+	gameController->registerDeathCallback(ent, fighterDeathExplosionCallback);
 }
 
 void fighterDeathExplosionCallback(flecs::entity id)

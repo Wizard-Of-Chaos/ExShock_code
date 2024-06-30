@@ -2,6 +2,7 @@
 #include "GuiController.h"
 #include "Campaign.h"
 #include <iostream>
+#include "AudioDriver.h"
 
 void CarrierUpgradeTab::build(IGUIElement* root, GuiDialog* dial, MENU_TYPE which)
 {
@@ -45,6 +46,7 @@ bool CarrierUpgradeTab::onConfirm(const SEvent& event)
 		guiController->showOkPopup();
 		return false;
 	}
+	audioDriver->playMenuSound("item_build.ogg");
 	campaign->removeSupplies(campaign->getCarrierUpgrade(currentSelection)->cost);
 	campaign->increaseCarrierUpgradeTier(currentSelection);
 	m_clearList();

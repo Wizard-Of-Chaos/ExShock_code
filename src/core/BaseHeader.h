@@ -80,6 +80,10 @@ using namespace gui;
 typedef int instId; //seems silly but helps keep my head straight
 typedef int dataId;
 
+typedef uint32_t NetworkId;
+const NetworkId INVALID_NETWORK_ID = 0;
+
+
 #define INVALID_DATA_ID -1
 
 const flecs::id_t INVALID_ENTITY_ID = 0;

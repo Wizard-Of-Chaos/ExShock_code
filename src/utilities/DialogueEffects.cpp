@@ -7,12 +7,12 @@
 #include "GuiDialogueMenu.h"
 #include "AttributeReaders.h"
 
-static void _injureWingman(dataId which)
+static void _injureWingman(dataId which, s32 turnsInjured=0)
 {
 	auto man = campaign->getWingman(which);
 	man->injured = true;
-	man->turnsInjured = 0;
-	++man->totalInjuries;
+	man->turnsInjured = turnsInjured;
+	if(turnsInjured >= 0) ++man->totalInjuries;
 	for (u32 i = 0; i < MAX_WINGMEN_ON_WING; ++i) {
 		if (campaign->getAssignedWingman(i) == man) {
 			campaign->removeAssignedWingman(i);
@@ -185,6 +185,11 @@ void recruitArthur()
 	campaign->assignWingmanToShip(arthur, ship);
 }
 
+void leeBuff()
+{
+	campaign->createNewWeaponInstance(heavyWeaponData[8]->wepComp);
+}
+
 void kateProject()
 {
 	//nothing for now
@@ -207,6 +212,7 @@ void dialogueWhistle()
 
 void arnoldFloorHit()
 {
+	_injureWingman(3, 1);
 	audioDriver->playMenuSound("../game/weapon_hit_impulse.ogg");
 }
 
@@ -259,8 +265,35 @@ void theodChomp()
 
 void arnoldMission()
 {
-	_injureWingman(3);
+	_injureWingman(3, -50);
 	campaign->setFlag(L"ARNOLD_MISSION_AVAILABLE");
+}
+
+void leeMission()
+{
+	_injureWingman(9, -50);
+	campaign->setFlag(L"LEE_MISSION_AVAILABLE");
+}
+
+void tauranMission()
+{
+	_injureWingman(4, -50);
+	campaign->setFlag(L"TAURAN_MISSION_AVAILABLE");
+}
+
+void leeGrounded()
+{
+	_injureWingman(9, -999);
+}
+
+void leeDebriefed()
+{
+	_injureWingman(9, 1);
+}
+
+void arthurLeft()
+{
+	_injureWingman(5, -999);
 }
 
 void exitDialogue()

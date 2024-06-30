@@ -349,9 +349,9 @@ vector3df getNewModuleRotDegrees(flecs::entity oldModule, s32 oldSlot, StationMo
 	return getNewModuleRotRadians(oldModule, oldSlot, newModule, newSlot) * RADTODEG;
 }
 
-flecs::entity createLooseHumanModule(vector3df pos, vector3df rot, vector3df scale)
+flecs::entity createLooseHumanModule(vector3df pos, vector3df rot, vector3df scale, dataId id, NetworkId net)
 {
-	flecs::entity mod = createDynamicObstacle(randPiece(true), pos, rot, scale, 25.f);
+	flecs::entity mod = createDynamicObstacle((id == INVALID_DATA_ID) ? randPiece(true) : id, pos, rot, scale, 25.f, 0.f, 0.f, false, net);
 	std::string name = mod.doc_name();
 	name += " [Derelict]";
 	mod.set_doc_name(name.c_str());
@@ -361,6 +361,8 @@ flecs::entity createLooseHumanModule(vector3df pos, vector3df rot, vector3df sca
 	mod.remove<HangarComponent>();
 	mod.remove<StationModuleComponent>();
 	mod.remove<PowerComponent>();
+
+	mod.get_mut<ObstacleComponent>()->type = DERELICT_STATION_MODULE;
 
 	return mod;
 }

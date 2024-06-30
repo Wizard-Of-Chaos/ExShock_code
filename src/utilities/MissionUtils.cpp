@@ -6,6 +6,7 @@
 #include "IrrlichtUtils.h"
 #include "GameFunctions.h"
 #include "StatusEffects.h"
+#include "LargeShipUtils.h"
 
 static const s32 _getLiveWingmanID()
 {
@@ -38,19 +39,21 @@ void onSalvageBustCb()
 	delete inst;
 }
 
+void _jumpByWing()
+{
+	s32 ace, reg, acewep, regwep, turr, turrwep;
+	gameController->setSpawns(ace, reg, acewep, regwep, turr, turrwep);
+
+	auto playerNode = gameController->getPlayer().get<IrrlichtComponent>()->node;
+	spawnScenarioWing(playerNode->getPosition() + getNodeForward(playerNode) * 650.f, randomRotationVector(), reg, regwep, ace, acewep, turr, turrwep);
+}
+
 void onAmbushBustCb()
 {
 	s32 talker = _getLiveWingmanID();
 	auto inst = loadWingman(wingMarkers[talker], false);
 	gameController->addLargePopup(inst->bustAmbushLine, inst->name);
-
-	s32 ace, reg, acewep, regwep, turr, turrwep;
-	gameController->setSpawns(ace, reg, acewep, regwep, turr, turrwep);
-	
-	auto playerNode = gameController->getPlayer().get<IrrlichtComponent>()->node;
-
-	spawnScenarioWing(playerNode->getPosition() + getNodeForward(playerNode) * 650.f, randomRotationVector(), reg, regwep, ace, acewep, turr, turrwep);
-
+	_jumpByWing();
 	delete inst;
 }
 
@@ -81,4 +84,94 @@ void onFinaleHoldoutCb()
 void arnoldCollectedCb()
 {
 	gameController->addLargePopup(L"Reading several enemy signatures closing on your position, sir. Sending you a rendezvous point.", L"Steven Mitchell");
+}
+
+void theodCollectCb()
+{
+	auto inst = campaign->createNewShipInstance(24);
+	campaign->addShipInstanceToHangar(inst);
+	_jumpByWing();
+	gameController->addLargePopup("It *is* in working order! I knew it! HHhrrrraaaaaaahhh!", "Theod Tantrus", true);
+	gameController->addLargePopup("Bring me my canvas! Bring the prey! I will tear you apart!", "Theod Tantrus", true);
+	campaign->setFlag(L"THEOD_MISSION_COMPLETED");
+	campaign->setFlag(L"EVENT_AVAILABLE");
+}
+
+void leeFinishCb()
+{
+	campaign->setFlag(L"LEE_MISSION_COMPLETED");
+	campaign->setFlag(L"EVENT_AVAILABLE");
+}
+
+void arthur1Cb()
+{
+	gameController->addLargePopup(L"Correct identification. This is indeed the weapon we are looking for. Uploading additional coordinates.", L"ARTHUR");
+}
+void arthur2Cb()
+{
+	_jumpByWing();
+	gameController->addLargePopup(L"We were anticipated here. Suggest moving quickly toward the next coordinates.", L"ARTHUR");
+}
+void arthur3Cb()
+{
+	_jumpByWing();
+	gameController->addLargePopup(L"All four weapons have been retrieved. Eliminate opposition and return them to the Chaos Theory for installation.", L"ARTHUR");
+	campaign->setFlag(L"ARTHUR_MISSION_COMPLETED");
+	campaign->setFlag(L"EVENT_AVAILABLE");
+}
+
+void sean1Cb()
+{
+	_jumpByWing();
+	gameController->addLargePopup(L"Damn it. Nothing here. Let's head to the next most likely one.", L"Sean Cooper");
+}
+
+void sean2Cb()
+{
+	gameController->addLargePopup(L"Receiving a transponder signal from nearby debris... it's faint, but it looks to be the Pendulum.", L"Sean Cooper");
+	gameController->addLargePopup(L"Sir, it's black box data. The Pendulum ejected logs while it was crashing and burning, it looks like.", L"Sean Cooper");
+	gameController->addLargePopup(L"I've got an idea of its velocity. Let's keep moving.");
+}
+
+void sean3Cb()
+{
+	_jumpByWing();
+	gameController->addLargePopup(L"Damn, they were waiting for us! That's the Pendulum, alright! Take 'em out!", L"Sean Cooper");
+	gameController->addLargePopup(L"I'm reading no power signatures from the ship at all, but it's missing a fighter complement... one last signal.", L"Sean Cooper");
+}
+
+void sean4Cb()
+{
+	_jumpByWing();
+	gameController->addLargePopup(L"That crazy son of a... he ejected from his craft? Without a pod?" L"Sean Cooper");
+	gameController->addLargePopup(L"We'll have to investigate the data when we get back to the Chaos Theory, sir. We're out of time.", L"Sean Cooper");
+	campaign->setFlag(L"SEAN_MISSION_COMPLETED");
+	campaign->setFlag(L"EVENT_AVAILABLE");
+}
+
+void jamesCb()
+{
+	gameController->addLargePopup(L"YEEEEEEEESSSSSSSSSSSSS! I consign this monstrous creature to *hell*! Hahahahaha!", L"James Lavovar");
+	campaign->setFlag(L"JAMES_MISSION_COMPLETED");
+	campaign->setFlag(L"EVENT_AVAILABLE");
+}
+
+void tauranCb()
+{
+	campaign->setFlag(L"TAURAN_MISSION_COMPLETED");
+	campaign->setFlag(L"EVENT_AVAILABLE");
+}
+
+void catCb()
+{
+	_jumpByWing();
+	gameController->addLargePopup(L"What the..?! It was a trap! Oh no! Commander, take cover as quick as you can! I'm so sorry!", L"Cat Cheadle");
+	gameController->triggerShipSpawn([]() {
+		auto playerNode = gameController->getPlayer().get<IrrlichtComponent>()->node;
+		auto ent = createAlienCarrier(14, playerNode->getPosition() + getNodeForward(playerNode) * 1100.f, randomRotationVector(), 24, 0, 25);
+		auto irr = ent.get_mut<IrrlichtComponent>();
+		decloakEffect(playerNode->getPosition() + getNodeForward(playerNode) * 1050.f, 400.f);
+		});
+	campaign->setFlag(L"CAT_MISSION_COMPLETED");
+	campaign->setFlag(L"EVENT_AVAILABLE");
 }

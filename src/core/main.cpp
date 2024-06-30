@@ -68,7 +68,7 @@ int main()
 		res = nullDev->getVideoModeList()->getDesktopResolution();
 		nullDev->drop();
 	}
-	device = createDevice(cfg->vid.driver, res, 32, cfg->vid.toggles[TOG_FULLSCREEN], cfg->vid.toggles[TOG_STENCILBUF], cfg->vid.toggles[TOG_VSYNC], 0);
+	device = createDevice(cfg->vid.driver, res, 32, cfg->vid.toggles[TOG_FULLSCREEN], false, cfg->vid.toggles[TOG_VSYNC], 0);
 	driver = device->getVideoDriver();
 	smgr = device->getSceneManager();
 	smgr->setLightManager(lmgr);

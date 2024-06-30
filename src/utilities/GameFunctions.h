@@ -95,4 +95,7 @@ void addStatusEffectToEntity(StatusEffect* eff, flecs::entity ent);
 
 //Refreshes the status effect on the entity (if applicable).
 void refreshStatusEffectOnEntity(UNIQUE_STATUS_EFFECT effect, flecs::entity ent);
+
+//returns INVALID_ENTITY if not found
+flecs::entity getEntityFromNetId(NetworkId id);
 #endif

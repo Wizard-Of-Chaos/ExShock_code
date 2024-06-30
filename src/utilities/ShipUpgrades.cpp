@@ -69,7 +69,7 @@ void SUIFinale::upgrade(flecs::entity inst)
 		auto wepInfo = hards->weapons[i].get_mut<WeaponInfoComponent>();
 		auto wepFire = hards->weapons[i].get_mut<WeaponFiringComponent>();
 		wepInfo->accuracy *= 2.f;
-		wepInfo->damage *= 2.f;
+		wepInfo->multiplier += 1.f;
 		wepInfo->hitEffects.push_back(wepHit_bfgExplosion);
 
 		if (wepInfo->usesPower) wepInfo->powerCost /= 2.f;

@@ -11,6 +11,7 @@
 static void downscale(IrrlichtComponent& irr)
 {
 	if (irr.downscaled) return;
+	if (irr.node->getType() == ESNT_SKY_BOX) return;
 	if (irr.node->getType() == ESNT_MESH && irr.botMesh != "") {
 		auto node = (IMeshSceneNode*)irr.node;
 		bool firstLoad;
@@ -44,6 +45,7 @@ static void downscale(IrrlichtComponent& irr)
 static void upscale(IrrlichtComponent& irr)
 {
 	if (!irr.downscaled) return;
+	if (irr.node->getType() == ESNT_SKY_BOX) return;
 	if (irr.node->getType() == ESNT_MESH && irr.topMesh != "") {
 		auto node = (IMeshSceneNode*)irr.node;
 		bool firstLoad;
@@ -83,16 +85,21 @@ void irrlichtRigidBodyPositionSystem(flecs::entity e, BulletRigidBodyComponent& 
 	catch (gameException e) {
 		baedsLogger::errLog(e.what());
 
-	}		
-	if (!rbc.rigidBody) {
+	}
+	if (!rbc.rigidBody || !e.has<BulletRigidBodyComponent>()) {
 		baedsLogger::errLog("No rigid body to update on entity " + entDebugStr(e) + "!\n");
+		return;
 	}
-	if (!irr.node) {
+	if (!irr.node || !e.has<IrrlichtComponent>()) {
 		baedsLogger::errLog("No node to update on entity " + entDebugStr(e) + "!\n");
+		return;
 	}
+	if (rbc.timeAlive < gameController->getDt())
+		return;
 
 	btTransform motionStateTransform;
-	rbc.rigidBody->getMotionState()->getWorldTransform(motionStateTransform);
+	btMotionState* motionState = rbc.rigidBody->getMotionState();
+	motionState->getWorldTransform(motionStateTransform);
 	irr.node->setPosition(btVecToIrr(motionStateTransform.getOrigin()));
 	btVector3 eulerOrientation;
 	QuaternionToEuler(motionStateTransform.getRotation(), eulerOrientation);
@@ -101,7 +108,7 @@ void irrlichtRigidBodyPositionSystem(flecs::entity e, BulletRigidBodyComponent& 
 	auto player = gameController->getPlayer();
 	if (player.is_alive()) {
 		f32 dist = irr.node->getAbsolutePosition().getDistanceFromSQ(player.get<IrrlichtComponent>()->node->getAbsolutePosition());
-		f32 farDist = (smgr->getActiveCamera()->getFarValue() * smgr->getActiveCamera()->getFarValue()) + (1200*1200);
+		f32 farDist = (smgr->getActiveCamera()->getFarValue() * smgr->getActiveCamera()->getFarValue()) + (2900*2900);
 		if (dist < 16777216) //4km
 			upscale(irr);
 		else

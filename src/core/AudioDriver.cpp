@@ -208,7 +208,22 @@ void AudioDriver::setListenerPosition(vector3df pos, vector3df up, vector3df for
 
 void AudioDriver::fadeTracks(u32 trackToFade, u32 trackToGain, f32 timeToFade, f32 fadingTrackGainTarget, f32 gainingTrackGainTarget)
 {
-	_trackfade fader = {trackToFade, fadingTrackGainTarget, trackToGain, gainingTrackGainTarget, timeToFade, 0.f};
+	_trackfade fader = {false, trackToFade, fadingTrackGainTarget, trackToGain, gainingTrackGainTarget, timeToFade, 0.f};
+	fades.push_back(fader);
+}
+void AudioDriver::fadeTrack(u32 trackToFade, f32 timeToFade, f32 fadeTarget)
+{
+	_trackfade fader = { true, trackToFade, fadeTarget };
+	fader.timeToFade = timeToFade;
+	fades.push_back(fader);
+}
+void AudioDriver::gainTrack(u32 trackToGain, f32 timeToGain, f32 gainTarget)
+{
+	_trackfade fader;
+	fader.isGaining = true;
+	fader.gainingTrack = trackToGain;
+	fader.gainingTrackGainTarget = gainTarget;
+	fader.timeToFade = timeToGain;
 	fades.push_back(fader);
 }
 
@@ -246,20 +261,36 @@ void AudioDriver::ingameMusicUpdate(f32 dt)
 		while (it != fades.end()) {
 			it->elapsedTime += dt;
 			bool done = false;
-			if (it->halftime) {
-				f32 fadeGain = it->getFade();
-				if (fadeGain == 0.f) {
-					done = true;
+			if (it->singleTrack) {
+				if(it->isGaining) {
+					f32 gain = it->getGain();
+					if (gain == it->gainingTrackGainTarget)
+						done = true;
+					setMusicGain(it->gainingTrack, gain);
 				}
-				setMusicGain(it->fadingTrack, fadeGain);
+				else {
+					f32 fadeGain = it->getFade();
+					if (fadeGain == it->fadingTrackGainTarget)
+						done = true;
+					setMusicGain(it->fadingTrack, fadeGain);
+				}
 			}
 			else {
-				f32 gain = it->getGain();
-				if (gain == 1.f) {
-					it->halftime = true;
-					it->elapsedTime = 0.f; //restart
+				if (it->halftime) {
+					f32 fadeGain = it->getFade();
+					if (fadeGain == 0.f) {
+						done = true;
+					}
+					setMusicGain(it->fadingTrack, fadeGain);
 				}
-				setMusicGain(it->gainingTrack, gain);
+				else {
+					f32 gain = it->getGain();
+					if (gain == 1.f) {
+						it->halftime = true;
+						it->elapsedTime = 0.f; //restart
+					}
+					setMusicGain(it->gainingTrack, gain);
+				}
 			}
 			if (done) {
 				it = fades.erase(it);

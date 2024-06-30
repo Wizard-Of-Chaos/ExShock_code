@@ -160,7 +160,7 @@ struct WingmanInstance
 	instId assignedShip = -1;
 	u32 totalKills = 0;
 	u32 totalInjuries = 0;
-	u32 turnsInjured = 0;
+	s32 turnsInjured = 0;
 	bool injured = false;
 	bool assigned = false;
 };
@@ -216,7 +216,8 @@ struct MapGenObstacle
 	bool isWeapon = false;
 
 	dataId id = 0;
-	flecs::entity_t entity = INVALID_ENTITY_ID;
+	OBSTACLE type;
+	NetworkId networkId = INVALID_NETWORK_ID;
 
 	vector3df position = vector3df(0, 0, 0);
 	vector3df rotation = vector3df(0, 0, 0);
@@ -227,31 +228,41 @@ struct MapGenObstacle
 	FACTION_TYPE faction = FACTION_NEUTRAL;
 	//some of the things that get punted across need extra data, store it here
 	f32 extraFloats[8] = { 0,0,0,0,0,0,0,0 };
+
+	NetworkId turretNetworkIds[MAX_TURRET_HARDPOINTS];
+	dataId turretIds[MAX_TURRET_HARDPOINTS];
+	bool turretArchetype[MAX_TURRET_HARDPOINTS];
+	dataId turretWepIds[MAX_TURRET_HARDPOINTS];
 };
 
 struct MapGenShip
 {
-	MapGenShip() { for (u32 i = 0; i < MAX_HARDPOINTS; ++i) { hardpoints[i] = INVALID_DATA_ID; wepArchetype[i] = false; hardpointEntities[i] = INVALID_ENTITY_ID;} }
+	MapGenShip() { for (u32 i = 0; i < MAX_HARDPOINTS; ++i) { hardpoints[i] = INVALID_DATA_ID; wepArchetype[i] = false; hardpointNetworkIds[i] = INVALID_ENTITY_ID;} }
 	MapGenShip(dataId id, bool isArchetype = false, vector3df position = vector3df(0.f), vector3df rotation = vector3df(0.f), FACTION_TYPE faction = FACTION_NEUTRAL) :
 		id(id), isArchetype(isArchetype), position(position), rotation(rotation), faction(faction) {
-		for (u32 i = 0; i < MAX_HARDPOINTS; ++i) { hardpoints[i] = INVALID_DATA_ID; wepArchetype[i] = false; hardpointEntities[i] = INVALID_ENTITY_ID; }
+		for (u32 i = 0; i < MAX_HARDPOINTS; ++i) { hardpoints[i] = INVALID_DATA_ID; wepArchetype[i] = false; hardpointNetworkIds[i] = INVALID_ENTITY_ID; }
 	}
 	//tears out data from an entity
 	MapGenShip(flecs::entity ent, vector3df position = vector3df(0.f), vector3df rotation = vector3df(0.f));
 	bool isArchetype = false;
 
 	dataId id = 0;
-	flecs::entity_t entity = INVALID_ENTITY_ID;
+	NetworkId networkId = INVALID_NETWORK_ID;
 
 	bool wepArchetype[MAX_HARDPOINTS];
-	flecs::entity_t hardpointEntities[MAX_HARDPOINTS];
+	NetworkId hardpointNetworkIds[MAX_HARDPOINTS];
 	dataId hardpoints[MAX_HARDPOINTS];
 	bool physArchetype = false;
 	dataId phys = INVALID_DATA_ID;
-	flecs::entity_t physEntity = INVALID_ENTITY_ID;
+	NetworkId physNetworkId = INVALID_NETWORK_ID;
 	bool heavyArchetype = false;
 	dataId heavy = INVALID_DATA_ID;
-	flecs::entity_t heavyEntity = INVALID_ENTITY_ID;
+	NetworkId heavyNetworkId = INVALID_NETWORK_ID;
+
+	NetworkId turretNetworkIds[MAX_TURRET_HARDPOINTS];
+	dataId turretIds[MAX_TURRET_HARDPOINTS];
+	bool turretArchetype[MAX_TURRET_HARDPOINTS];
+	dataId turretWepIds[MAX_TURRET_HARDPOINTS];
 
 	vector3df position = vector3df(0, 0, 0);
 	vector3df rotation = vector3df(0, 0, 0);

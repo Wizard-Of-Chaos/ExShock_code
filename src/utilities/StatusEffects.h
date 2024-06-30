@@ -61,4 +61,8 @@ struct SlowdownEffect : public StatusEffect
 	f32 strength = .75f;
 };
 
+struct DelayedKillEffect : public StatusEffect
+{
+	virtual bool apply(f32 dt, flecs::entity self);
+};
 #endif

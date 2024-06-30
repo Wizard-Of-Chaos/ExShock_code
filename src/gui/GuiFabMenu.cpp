@@ -2,6 +2,7 @@
 #include "GuiController.h"
 #include "Campaign.h"
 #include "GameStateController.h"
+#include "AudioDriver.h"
 
 void _setButtons(bool building, IGUIButton* build, IGUIButton* scrap)
 {
@@ -230,6 +231,7 @@ bool GuiFabMenu::onAmmo(const SEvent& event)
 		campaign->addSupplies(pay);
 		return false;
 	}
+	audioDriver->playMenuSound("ammo_build.ogg");
 	campaign->addAmmo(10);
 	showSupplies();
 	return false;

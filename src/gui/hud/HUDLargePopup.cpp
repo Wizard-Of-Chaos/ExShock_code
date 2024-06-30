@@ -59,6 +59,8 @@ HUDLargePopup::~HUDLargePopup()
 }
 void HUDLargePopup::updateElement(flecs::entity playerId)
 {
+	if (gameController->startAnim()) return;
+
 	if (curDuration >= duration) {
 		if (!queuedMessages.empty()) {
 			m_changeMsg(queuedMessages.front());
@@ -86,7 +88,12 @@ void HUDLargePopup::updateElement(flecs::entity playerId)
 void HUDLargePopup::m_changeMsg(_waiting which)
 {
 	msg->setText(wstr(which.msg).c_str());
-	auto tex = assets->getTexture("assets/ui/portraits/" + which.spkr + ".png", false);
+	ITexture* tex = nullptr;
+	if (which.spkr == "Tutorial")
+		tex = assets->getTexture("assets/ui/aim.png", false);
+	else
+		tex = assets->getTexture("assets/ui/portraits/" + which.spkr + ".png", false);
+
 	if (tex) {
 		spkr->setImage(tex);
 		spkr->setVisible(true);
@@ -95,10 +102,10 @@ void HUDLargePopup::m_changeMsg(_waiting which)
 		spkr->setVisible(false);
 	}
 	if (!which.banter) {
-		audioDriver->playGameSound(gameController->getPlayer(), "incoming_message.ogg");
+		audioDriver->playGameSound(gameController->getPlayer(), "incoming_message.ogg", 1.f, 20.f, 1200.f, false, true);
 	}
 	else {
-		audioDriver->playGameSound(gameController->getPlayer(), "incoming_banter.ogg");
+		audioDriver->playGameSound(gameController->getPlayer(), "incoming_banter.ogg", 1.f, 20.f, 1200.f, false, true);
 	}
 	name->setText(wstr(which.spkr).c_str());
 }

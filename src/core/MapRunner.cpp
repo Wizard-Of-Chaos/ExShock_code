@@ -18,6 +18,9 @@
 #include "GameStateController.h"
 #include "AudioDriver.h"
 #include <CrashLogger.h>
+#include "SensorComponent.h"
+#include "NetworkingComponent.h"
+#include "ObstacleAI.h"
 
 const std::unordered_map<SCENARIO_TYPE, std::string> objectiveTypeStrings = {
 	{SCENARIO_KILL_HOSTILES, "Dogfight"},
@@ -48,7 +51,8 @@ const std::unordered_map<SCENARIO_TYPE, std::string> objectiveTypeStrings = {
 	{SCENARIO_THEOD, "Theod"},
 	{SCENARIO_JAMES, "James"},
 
-	{SCENARIO_CUSTOM, "Custom"}
+	{SCENARIO_CUSTOM, "Custom"},
+	{SCENARIO_TUTORIAL, "Tutorial"}
 };
 
 const std::unordered_map<SECTOR_TYPE, std::string> environmentTypeStrings = {
@@ -143,10 +147,12 @@ void MapRunner::build(SCENARIO_TYPE objective, SECTOR_TYPE sector, bool isCampai
 	m_setPlayerObjPositions();
 
 	m_setPlayer();
-	gameController->initializeHUD();
+	//gameController->initializeHUD();
 
-	m_setObjectives();
-	m_setObstacles();
+	if (!gameController->isNetworked() || stateController->isHost()) {
+		m_setObjectives();
+		m_setObstacles();
+	}
 
 	m_timeBetweenBanters = 180.f;
 	m_minTimeSinceBeingShot = 25.f;
@@ -156,16 +162,55 @@ void MapRunner::build(SCENARIO_TYPE objective, SECTOR_TYPE sector, bool isCampai
 		campaign->loadRandomBanter();
 		m_bantz = campaign->getAvailableBanter();
 	}
+
+	if (gameController->isNetworked()) {
+		if (stateController->isHost()) {
+			baedsLogger::log("Host sending off scenario obstacle data...\n");
+			auto filter = game_world->filter<ObstacleComponent, NetworkingComponent>();
+			filter.each([this](flecs::entity e, ObstacleComponent& obst, NetworkingComponent& net) {
+				auto gen = createMapGenObstacleFromEntity(e);
+				if (gen.networkId != INVALID_NETWORK_ID)
+					this->addObstacleToMapObstacles(gen);
+				});
+		}
+		auto filter2 = game_world->filter<ShipComponent, NetworkingComponent, BulletRigidBodyComponent>();
+		filter2.each([this](flecs::entity e, ShipComponent& ship, NetworkingComponent& net, BulletRigidBodyComponent& rbc) {
+			btTransform motionStateTransform;
+			rbc.rigidBody->getMotionState()->getWorldTransform(motionStateTransform);
+			vector3df pos = btVecToIrr(motionStateTransform.getOrigin());
+			btVector3 eulerOrientation;
+			QuaternionToEuler(motionStateTransform.getRotation(), eulerOrientation);
+			vector3df rot = btVecToIrr(eulerOrientation);
+			MapGenShip gen(e, pos, rot);
+			if (gen.networkId != INVALID_NETWORK_ID)
+				this->addShipToMapShips(gen);
+			});
+	}
+
 	std::cout << "Map and scenario built!\n";
 	if (xml) {
 		delete xml;
 		xml = nullptr;
 	}
+	startMap();
 }
 
 void MapRunner::startMap()
 {
 	//use this for initial cutscene
+	if (!gameController->getPlayer().is_alive()) {
+		//huh
+		return;
+	}
+	auto node = gameController->getPlayer().get<IrrlichtComponent>()->node;
+	vector3df endPos = node->getPosition();
+	vector3df startPos = endPos + (getNodeBackward(node) * 100.f);
+	audioDriver->playMenuSound("scenario_load.ogg");
+	irr::core::array<vector3df> points;
+	points.push_back(startPos); points.push_back(endPos);
+	auto anim = smgr->createFollowSplineAnimator(device->getTimer()->getTime(), points, .2f, 1.f, false, false, false);
+	node->addAnimator(anim);
+	anim->drop();
 }
 
 bool MapRunner::run(f32 dt)
@@ -179,7 +224,7 @@ bool MapRunner::run(f32 dt)
 	if (obj->isObjOver(dt)) {
 		//if we failed we're done here, return true
 		if (!obj->success()) return true;
-		audioDriver->playGameSound(gameController->getPlayer(), "objective_complete.ogg", 1.f, 100.f, 1200.f);
+		audioDriver->playGameSound(gameController->getPlayer(), "objective_complete.ogg", 1.f, 100.f, 1200.f, false, true);
 		//trigger the completion function for the objective
 		obj->onComplete(); 
 
@@ -222,12 +267,28 @@ void MapRunner::m_setRadioSignals(ObjElem& obj)
 
 void MapRunner::endMap()
 {
+	audioDriver->fadeTrack(0, .65f);
+	audioDriver->fadeTrack(1, .65f);
+	if (!gameController->getPlayer().is_alive()) {
+		audioDriver->playMenuSound("mission_failed.ogg");
+		return;
+	}
+	auto node = gameController->getPlayer().get<IrrlichtComponent>()->node;
+	vector3df start = node->getAbsolutePosition();
+	vector3df out = start + (getNodeForward(node) * 200.f);
+	vector3df up = out + (getNodeUp(node) * 155.f);
+	irr::core::array<vector3df> points;
+	audioDriver->playMenuSound("mission_success.ogg");
+	points.push_back(start); points.push_back(out); points.push_back(up);
+	auto anim = smgr->createFollowSplineAnimator(device->getTimer()->getTime(), points, .35f, .5f, false, false, true);
+	node->addAnimator(anim);
+	anim->drop();
 	//use this for exiting cutscene
 }
 
 bool MapRunner::m_timeForBanter()
 {
-	if (m_bantz.empty() || !gameController->getPlayer().is_alive() || m_type == SCENARIO_BOSSFIGHT || !cfg->game.toggles[GTOG_BANTER] || !m_campaignMatch) {
+	if (m_bantz.empty() || !gameController->getPlayer().is_alive() || m_type == SCENARIO_BOSSFIGHT || !cfg->game.toggles[GTOG_BANTER] || !m_campaignMatch || m_type == SCENARIO_TUTORIAL) {
 		return false;
 	}
 	f32 lastTime = gameController->getPlayer().get<HealthComponent>()->timeSinceLastHit;
@@ -276,8 +337,13 @@ void MapRunner::m_preload()
 	anim->drop();
 	anim = getTextureAnim("assets/effects/shieldhit/");
 	anim->drop();
-	anim = getTextureAnim("assets/effects/radiation/");
+	anim = getTextureAnim("assets/effects/buff_defense/");
 	anim->drop();
+	anim = getTextureAnim("assets/effects/buff_offense/");
+	anim->drop();
+	anim = getTextureAnim("assets/effects/buff_shield/");
+	anim->drop();
+
 	baedsLogger::log("Assets pre-loaded.\n");
 }
 
@@ -344,10 +410,6 @@ void MapRunner::m_setPlayer()
 
 	flecs::entity player = createPlayerShip(m_playerStartPos, rotation);
 
-	if (gameController->isNetworked()) {
-		m_mapShips.push_back(MapGenShip(player));
-	}
-
 	if (m_type == SCENARIO_DUMMY) {
 		auto obj = new RemoveEntityObjective({ player });
 		m_curObjective = std::shared_ptr<Objective>(obj);
@@ -359,19 +421,19 @@ void MapRunner::m_setPlayer()
 		spotlight->setLightType(ELT_SPOT);
 	}
 	if (m_campaignMatch) { //if its a campaign load the wingmen
-		for (u32 i = 0; i < MAX_WINGMEN_ON_WING; ++i) {
-			if (!campaign->getAssignedWingman(i) || !campaign->getAssignedShip(i)) continue;
-			vector3df wingpos = m_playerStartPos;
-			if (i % 2 == 0) {
-				wingpos.X += 20.f + (i * 20.f);
+		if (m_type != SCENARIO_TUTORIAL) {
+			for (u32 i = 0; i < MAX_WINGMEN_ON_WING; ++i) {
+				if (!campaign->getAssignedWingman(i) || !campaign->getAssignedShip(i)) continue;
+				vector3df wingpos = m_playerStartPos;
+				if (i % 2 == 0) {
+					wingpos.X += 20.f + (i * 20.f);
+				}
+				else {
+					wingpos.X -= 20.f + (i * 20.f);
+				}
+				flecs::entity wingman = createWingman(i, player, wingpos, rotation);
+				gameController->setWingman(wingman, i);
 			}
-			else {
-				wingpos.X -= 20.f + (i * 20.f);
-			}
-			flecs::entity wingman = createWingman(i, player, wingpos, rotation);
-			gameController->setWingman(wingman, i);
-
-			auto wingnode = wingman.get<IrrlichtComponent>()->node;
 		}
 		if (m_type != SCENARIO_BOSSFIGHT && m_sector != SECTOR_FINALE && m_sector != SECTOR_RINGS && m_type != SCENARIO_ARNOLD) {
 			StickySpawnerScenarioEffect* eff = new StickySpawnerScenarioEffect();
@@ -390,6 +452,7 @@ void MapRunner::m_setPlayer()
 	if (m_type == SCENARIO_SCRAMBLE || m_type == SCENARIO_BOSSFIGHT) {
 		baedsLogger::log("Adding carrier... ");
 		flecs::entity chaos = createChaosTheory(m_playerStartPos + (getNodeForward(n)*500.f) + (getNodeDown(n)*300.f), rotation);
+		gameController->setChaosTheory(chaos);
 		auto ai = chaos.get_mut<AIComponent>();
 		ai->wingCommander = player;
 		ai->onWing = true;
@@ -400,10 +463,10 @@ void MapRunner::m_setPlayer()
 void MapRunner::m_setObstacles()
 {
 	baedsLogger::log("Setting up scenario obstacles for type " + environmentTypeStrings.at(m_sector) + "... \n");
-	if (m_type == SCENARIO_DUMMY) {
-		baedsLogger::log("Not building the obstacles, dummy scenario.\n");
-		return;
-	}
+	//if (m_type == SCENARIO_DUMMY) {
+		//createAsteroid(vector3df(0), vector3df(0), vector3df(20.f), 20.f, 0.f, 0.f);
+		//return;
+	//}
 	switch (m_sector) {
 	case SECTOR_DEBRIS: {
 		m_debris();
@@ -533,6 +596,27 @@ void MapRunner::m_setObjectives()
 	case SCENARIO_ARNOLD:
 		m_arnold();
 		break;
+	case SCENARIO_THEOD:
+		m_theod();
+		break;
+	case SCENARIO_MI_CHA:
+		m_lee();
+		break;
+	case SCENARIO_ARTHUR:
+		m_arthur();
+		break;
+	case SCENARIO_SEAN:
+		m_sean();
+		break;
+	case SCENARIO_TAURAN:
+		m_tauran();
+		break;
+	case SCENARIO_JAMES:
+		m_james();
+		break;
+	case SCENARIO_CAT:
+		m_cat();
+		break;
 
 	case SCENARIO_BOSSFIGHT: {
 		switch (m_sector) {
@@ -564,12 +648,13 @@ void MapRunner::m_setObjectives()
 		
 		break;
 	}
+	case SCENARIO_TUTORIAL:
+		m_tutorial();
+		break;
 	default:
 		m_dogfight();
 		break;
 	}
-
-	radioSignal = createRadioMarker(m_objectivesStartPos[0] + vector3df(0.f, -75.f, 0.f), "Radio Signal");
 
 	if (m_sector == SECTOR_FINALE && m_type != SCENARIO_BOSSFIGHT) {
 		baedsLogger::log("...and adding finale extraction...\n");
@@ -598,7 +683,8 @@ void MapRunner::m_setObjectives()
 	}
 
 	m_curObjective = m_objectives.front();
-	if(m_sector != SECTOR_RINGS) m_spawnRegWing(m_objectivesStartPos.back() + vector3df(0, -250.f, 0), vector3df(0, 0, 0));
+	if(m_sector != SECTOR_RINGS && m_type != SCENARIO_TUTORIAL) 
+		m_spawnRegWing(m_objectivesStartPos.back() + vector3df(0, -250.f, 0), vector3df(0, 0, 0));
 	baedsLogger::log("Done with objective setup.\n");
 }
 
@@ -688,14 +774,14 @@ void MapRunner::m_debris()
 		createRandomShipDebris(pos, randomRotationVector(), vector3df(scale, scale, scale));
 		m_obstaclePositions.push_back(pos);
 	}
-	if(m_type != SCENARIO_BOSSFIGHT) m_debrisRoadblocks();
+	if(m_type != SCENARIO_BOSSFIGHT && m_type != SCENARIO_TUTORIAL) m_debrisRoadblocks();
 }
 
 void MapRunner::m_debrisRoadblocks()
 {
 	//add encounters to the fields
 	u32 numEncounters = 4;
-	baedsLogger::log("Setting up roadblocks..\n");
+	baedsLogger::log("Setting up roadblocks...\n");
 	baedsLogger::log("Number: " + std::to_string(numEncounters) + ", corridors: " + std::to_string(m_corridors.size()) + "\n");
 
 	for (u32 i = 0; i < m_corridors.size(); ++i) {
@@ -1235,7 +1321,7 @@ void MapRunner::m_fleet()
 	flecs::entity causality = INVALID_ENTITY;
 	if (m_type != SCENARIO_BOSSFIGHT) {
 		causality = createHumanCarrier(21, causalityPos, rotation, CAUSALITY_RAILGUN, 0, UPGRADED_TSUNAMI);
-		createChaosTheory(chaosTheoryPos, rotation);
+		gameController->setChaosTheory(createChaosTheory(chaosTheoryPos, rotation));
 	}
 	else {
 		createHumanCarrier(12, causalityPos, rotation, FRIGATE_RAILGUN, 0, UPGRADED_TSUNAMI);
@@ -1488,7 +1574,7 @@ void MapRunner::m_brawl()
 
 	auto targs = spawnShipWing(hostileStart, vector3df(0, -90, 0), getCurAiNum(1), 1, 1, 4, 9, 1, 1);
 
-	spawnShipWing(friendlyStart, vector3df(0, 90, 0), getCurAiNum(-1), 18, 7, 18, 7, 0, 3, true);
+	spawnShipWing(friendlyStart, vector3df(0, 90, 0), getCurAiNum(-1), 18, 17, 18, 17, 0, 3, true);
 
 	auto obj = new RemoveEntityObjective(targs);
 	obj->setRadioSpawn(m_objectivesStartPos.back());
@@ -1512,7 +1598,7 @@ void MapRunner::m_scuttle()
 {
 	auto pnode = gameController->getPlayer().get<IrrlichtComponent>()->node;
 	auto chaostheory = createChaosTheory(m_playerStartPos + (getNodeDown(pnode)*800.f), pnode->getRotation(), true);
-
+	gameController->setChaosTheory(chaostheory);
 	auto station = createModularHumanStation(m_objectivesStartPos.back(), randomRotationVector(), 16, FACTION_NEUTRAL, vector3df(25, 25, 25));
 	//get the dock module
 	std::list<flecs::entity> targs;
@@ -1529,11 +1615,12 @@ void MapRunner::m_scuttle()
 	obj->timeToCapture = 30.f;
 	obj->enemySpawnRate = 15.f;
 
-	auto esc = new EscortObjective({ chaostheory });
-	esc->m_escorted = capShip;
+	auto escort = new GoToPointObjective({});
+	escort->setPoint(m_playerStartPos);
+	escort->setDistance(400.f);
 
 	m_objectives.push_back(std::shared_ptr<Objective>(obj));
-	m_objectives.push_back(std::shared_ptr<Objective>(esc));
+	m_objectives.push_back(std::shared_ptr<Objective>(escort));
 	//finish up with an escort back to the Chaos Theory
 }
 
@@ -1566,9 +1653,9 @@ void MapRunner::m_extract()
 	//obj->enemySpawnRate = 900.f;
 
 	m_objectives.push_back(std::shared_ptr<Objective>(obj));
-	auto escort = new EscortObjective({ capShip });
+	auto escort = new GoToPointObjective({});
 	escort->setPoint(m_playerStartPos);
-	escort->setDistance(250.f);
+	escort->setDistance(400.f);
 	m_objectives.push_back(std::shared_ptr<Objective>(escort));
 }
 
@@ -1688,32 +1775,279 @@ void MapRunner::m_arnold()
 
 void MapRunner::m_sean()
 {
+	gameController->addLargePopup(L"This seems to be the correct sector... head to the first point, sir.", L"Sean Cooper");
 
+	auto obj1 = new GoToPointObjective({});
+	obj1->setType(OBJ_GO_TO);
+	obj1->setPoint(m_objectivesStartPos.front());
+	obj1->setRadioSpawn(m_objectivesStartPos.front());
+	obj1->setCompletionCb(sean1Cb);
+	m_objectives.push_back(ObjElem(obj1));
+
+	auto obj2 = new GoToPointObjective({});
+	obj2->setType(OBJ_GO_TO);
+	obj2->setPoint(m_objectivesStartPos[1]);
+	obj2->setRadioSpawn(m_objectivesStartPos[1]);
+	obj2->setCompletionCb(sean2Cb);
+	m_objectives.push_back(ObjElem(obj2));
+
+	auto pendulum = createDeadShipAsObstacle(12, m_objectivesStartPos[2] - vector3df(60.f), randomRotationVector(), 3);
+	pendulum.set_doc_name("RFS Pendulum");
+
+	createSupplyBox(m_objectivesStartPos[2] + vector3df(40.f), randomRotationVector(), vector3df(5.f));
+	createSupplyBox(m_objectivesStartPos[2] + vector3df(40.f,0.f,0.f), randomRotationVector(), vector3df(5.f));
+	createSupplyBox(m_objectivesStartPos[2] + vector3df(70.f), randomRotationVector(), vector3df(5.f));
+
+	auto obj3 = new GoToPointObjective({});
+	obj3->setType(OBJ_GO_TO);
+	obj3->setPoint(m_objectivesStartPos[2]);
+	obj3->setRadioSpawn(m_objectivesStartPos[2]);
+	obj3->setCompletionCb(sean3Cb);
+	m_objectives.push_back(ObjElem(obj3));
+
+	auto tux = createDeadShipAsObstacle(0, m_objectivesStartPos.back(), randomRotationVector(), 3);
+	tux.set_doc_name("Empty Tuxedo?");
+
+	auto obj4 = new GoToPointObjective({});
+	obj4->setType(OBJ_GO_TO);
+	obj4->setPoint(m_objectivesStartPos.back());
+	obj4->setRadioSpawn(m_objectivesStartPos.back());
+	obj4->setCompletionCb(sean4Cb);
+	m_objectives.push_back(ObjElem(obj4));
 }
 
 void MapRunner::m_cat()
 {
-
+	auto obj = new GoToPointObjective({});
+	obj->setType(OBJ_GO_TO);
+	obj->setPoint(m_objectivesStartPos.back());
+	obj->setRadioSpawn(m_objectivesStartPos.back());
+	obj->setCompletionCb(catCb);
+	m_objectives.push_back(ObjElem(obj));
 }
+
 void MapRunner::m_tauran()
 {
+	auto station = createModularHumanStation(m_objectivesStartPos.back(), randomRotationVector(), 16, FACTION_NEUTRAL, vector3df(25, 25, 25));
+	//get the dock module
+	std::list<flecs::entity> targs;
+	flecs::entity dockTarget = station[0];
+	auto capShip = createTroopTransport(m_playerStartPos + vector3df(0, -100.f, 0));
+	targs.push_back(dockTarget);
+	targs.push_back(capShip);
 
+	auto obj = new DockObjective(targs);
+	obj->setRadioSpawn(m_objectivesStartPos.back());
+
+	obj->spkr = "Tauran Druugas";
+	obj->dockStr = "Won't take but a moment, commander. I'm uploading the data as quickly as I can.";
+	obj->completeStr = "I do believe we're set. Making my way toward the exit now, commander. See you back on the Chaos Theory.";
+	obj->timeToCapture = 30.f;
+	obj->enemySpawnRate = 20.f;
+	obj->setCompletionCb(tauranCb);
+
+	m_objectives.push_back(std::shared_ptr<Objective>(obj));
+
+	auto obj2 = new GoToPointObjective({});
+	obj2->setPoint(m_objectivesStartPos.back());
+	obj2->setRadioSpawn(m_objectivesStartPos.back());
+	m_objectives.push_back(std::shared_ptr<Objective>(obj2));
 }
+
 void MapRunner::m_lee()
 {
+	auto station = createModularStationFromFile(m_objectivesStartPos.back(), randomRotationVector(), "alien_scoutstation.xml", true, FACTION_NEUTRAL);
+	//get the dock module
+	std::list<flecs::entity> targs;
+	flecs::entity dockTarget = station[0];
+	auto capShip = createTroopTransport(m_playerStartPos + vector3df(0, -100.f, 0));
+	targs.push_back(dockTarget);
+	targs.push_back(capShip);
 
+	auto obj = new DockObjective(targs);
+	obj->setRadioSpawn(m_objectivesStartPos.back());
+	
+	obj->completeStr = "Sir, Lee's back, but she passed out almost as soon as we got to her. She's got something with her -- we're bringing that back too. Get us out of here.";
+	obj->dockStr = "This place is eerily quiet, commander. Lee just sprinted right in. We're chasing after her now.";
+	obj->timeToCapture = 30.f;
+	obj->enemySpawnRate = 20.f;
+	obj->setCompletionCb(leeFinishCb);
+
+	m_objectives.push_back(std::shared_ptr<Objective>(obj));
+
+	auto obj2 = new GoToPointObjective({});
+	obj2->setPoint(m_objectivesStartPos.back());
+	obj2->setRadioSpawn(m_objectivesStartPos.back());
+	m_objectives.push_back(std::shared_ptr<Objective>(obj2));
 }
+
 void MapRunner::m_theod()
 {
+	gameController->addLargePopup("That's it. I've detected the signal up ahead. Bring me my tools, human, and I will craft you a masterpiece.", "Theod Tantrus");
+	flecs::entity ship = createDeadShipAsObstacle(24, m_objectivesStartPos.front(), randomRotationVector(), 3);
+	gameController->registerDeathCallback(ship, supplyBoxDeath);
+	AIComponent ai;
+	auto mineAI = new MineAI();
+	mineAI->self = ship;
+	ai.aiControls = std::shared_ptr<AIType>(mineAI);
+	ship.set<AIComponent>(ai);	
+	ThrustComponent thrust;
+	HardpointComponent hards;
+	ship.set<ThrustComponent>(thrust);
+	ship.set<HardpointComponent>(hards);
+	initializeNeutralFaction(ship);
+	initializeSensors(ship, 175.f, DEFAULT_SENSOR_UPDATE_INTERVAL, true);
 
+	auto obj = new RemoveEntityObjective({ship});
+	obj->setType(OBJ_COLLECT);
+	obj->setRadioSpawn(m_objectivesStartPos.front());
+	obj->setCompletionCb(theodCollectCb);
+	m_objectives.push_back(ObjElem(obj));
+
+
+	auto finobj = new GoToPointObjective({});
+	finobj->setType(OBJ_GO_TO);
+	finobj->setPoint(m_objectivesStartPos.back());
+	finobj->setRadioSpawn(m_objectivesStartPos.back());
+	m_objectives.push_back(ObjElem(finobj));
 }
 void MapRunner::m_arthur()
 {
+	gameController->addLargePopup("Analysis of this sector indicates several possible locations for the weapons. We will need to search.", "ARTHUR");
+	auto wep1 = createWeaponAsObstacle(30, HRDP_REGULAR, m_objectivesStartPos.front(), randomRotationVector(), vector3df(8.f), INVALID_NETWORK_ID, true);
+	auto obj = new RemoveEntityObjective({ wep1 });
+	obj->setType(OBJ_COLLECT);
+	obj->setRadioSpawn(m_objectivesStartPos.front());
+	obj->setCompletionCb(arthur1Cb);
+	m_objectives.push_back(ObjElem(obj));
 
+	auto wep2 = createWeaponAsObstacle(30, HRDP_REGULAR, m_objectivesStartPos[1] + vector3df(40.f), randomRotationVector(), vector3df(8.f), INVALID_NETWORK_ID, true);
+	auto wep3 = createWeaponAsObstacle(30, HRDP_REGULAR, m_objectivesStartPos[1] + vector3df(-40.f), randomRotationVector(), vector3df(8.f), INVALID_NETWORK_ID, true);
+	obj = new RemoveEntityObjective({ wep2, wep3 });
+	obj->setType(OBJ_COLLECT);
+	obj->setRadioSpawn(m_objectivesStartPos[1]);
+	obj->setCompletionCb(arthur2Cb);
+	m_objectives.push_back(ObjElem(obj));
+
+	auto wep4 = createWeaponAsObstacle(30, HRDP_REGULAR, m_objectivesStartPos.back(), randomRotationVector(), vector3df(8.f), INVALID_NETWORK_ID, true);
+	obj = new RemoveEntityObjective({ wep4 });
+	obj->setType(OBJ_COLLECT);
+	obj->setRadioSpawn(m_objectivesStartPos.back());
+	obj->setCompletionCb(arthur3Cb);
+	m_objectives.push_back(ObjElem(obj));
 }
+
 void MapRunner::m_james()
 {
+	gameController->addLargePopup(L"Hahahaha! Commander, do you see it?! Do you see our quarry? It is *time*, commander!", L"James Lavovar");
+	auto ent = createAlienCarrier(14, m_objectivesStartPos.front(), randomRotationVector(), UPGRADED_PLASMA_SNIPER, 0, UPGRADED_PLASMA);
+	auto obj = new RemoveEntityObjective({ ent });
+	obj->setType(OBJ_DESTROY);
+	obj->setRadioSpawn(m_objectivesStartPos.front());
+	obj->setCompletionCb(jamesCb);
+	m_objectives.push_back(ObjElem(obj));
+}
 
+void _tutorial1()
+{
+	gameController->addLargePopup(L"Up and running. Commander, do a few strafes and test the jets.", L"Martin Hally");
+	gameController->addLargePopup(L"Use " + getKeyDesc(IN_STRAFE_UP) + L" and " + getKeyDesc(IN_STRAFE_DOWN) + L" to move up and down. Use " + 
+	getKeyDesc(IN_STRAFE_LEFT) + L" and " + getKeyDesc(IN_STRAFE_RIGHT) + L" to strafe left and right. Try those now.", L"Tutorial");
+}
+
+void _tutorial2()
+{
+	gameController->addLargePopup(L"Right. Alright, do a few rolls, and then test the boost capacity.", L"Martin Hally");
+	gameController->addLargePopup(L"Use " + getKeyDesc(IN_ROLL_LEFT) + L" and " + getKeyDesc(IN_ROLL_RIGHT) + L" to roll left and right. Use " +
+		getKeyDesc(IN_AFTERBURNER) + L" to accelerate forward with a massive boost. Try those now.", L"Tutorial");
+}
+
+void _tutorial3()
+{
+	gameController->addLargePopup(L"Careful, dammit! If you go too fast, you're gonna take more damage. Test out your guns now. Target some of the nearby debris and let fly.", L"Martin Hally");
+	gameController->addLargePopup(L"Use " + getKeyDesc(IN_SELECT_TARGET) + L" to select a target, then use " + getKeyDesc(IN_FIRE_REGULAR) + L" to fire your basic weaponry.", L"Tutorial");
+}
+
+void _tutorial4()
+{
+	gameController->addLargePopup(L"On the right-hand side of your screen ammunition counts are shown for your weaponry. Press " + getKeyDesc(IN_RELOAD)
+		+ L" to manually reload. Some guns will also cost energy to fire, shown above your health.", L"Tutorial");
+	gameController->addLargePopup(L"Your ship is also equipped with heavy weaponry -- high-damage but slow. Press " + getKeyDesc(IN_FIRE_HEAVY) + L" to fire your rail gun.", L"Tutorial");
+}
+
+void _tutorial5()
+{
+	gameController->addLargePopup(L"Your ship is also equipped with a physics-based hardpoint, which can manipulate objects and other ships. Press " + getKeyDesc(IN_FIRE_PHYS) + L" to fire your impulse cannon.", L"Tutorial");
+}
+
+void _tutorial6()
+{
+	gameController->addLargePopup(L"Good work, sir. We've got a small problem, though. We've got a few malfunctioning turrets between you and a chase team. Take them out so they can get there.", L"Steven Mitchell");
+	gameController->addLargePopup(L"Your HUD will show contacts for objectives, hostiles, and friendlies. Select and move toward the blue diamond, then destroy all hostiles nearby.", L"Tutorial");
+	gameController->addLargePopup(L"Enemy ships won't be standing still, and neither will you. With them selected as a target, aim for the crosshairs in front of them to hit them.", L"Tutorial");
+}
+
+void _tutorial7()
+{
+	gameController->triggerShipSpawn([](){
+		for (u32 i = 0; i < MAX_WINGMEN_ON_WING; ++i) {
+			if (!campaign->getAssignedWingman(i) || !campaign->getAssignedShip(i)) continue;
+			auto playerIrr = gameController->getPlayer().get<IrrlichtComponent>();
+			vector3df wingpos = playerIrr->node->getAbsolutePosition();
+			wingpos += getNodeBackward(playerIrr->node) * 50.f;
+			if (i % 2 == 0) {
+				wingpos.X += 20.f + (i * 20.f);
+			}
+			else {
+				wingpos.X -= 20.f + (i * 20.f);
+			}
+			flecs::entity wingman = createWingman(i, gameController->getPlayer(), wingpos, playerIrr->node->getRotation());
+			gameController->setWingman(wingman, i);
+		}
+		});
+	gameController->addLargePopup(L"Sending out the chase squad now. Lieutenants Cooper and Cheadle, bring the commander in.", L"Steven Mitchell");
+	gameController->addLargePopup(L"Yes, sir! Good that you're in one piece, commander! Let's move toward the rendezvous, yeah?", L"Cat Cheadle");
+	gameController->addLargePopup(L"Your wingmen will engage enemies on their own, but can be ordered toward specific targets. Hit " + getKeyDesc(IN_OPEN_COMMS) + L" to open your comms menu and see the options.", L"Tutorial");
+	gameController->addLargePopup(L"Make sure to keep your wingmen focused -- if they're shot down, they'll be injured for several engagements.");
+	gameController->addLargePopup(L"When you're ready, move toward the next objective to complete the tutorial.", L"Tutorial");
+}
+
+void MapRunner::m_tutorial()
+{
+	gameController->addLargePopup(L"Got it. The Tuxedo should start up now.", L"Martin Hally");
+	gameController->addLargePopup(L"Excellent. Sir, can you hear us? Try moving your ship around, we think we've remotely reactivated it.", L"Steven Mitchell");
+	gameController->addLargePopup(L"Use your mouse to move the camera around, and use " + getKeyDesc(IN_THRUST_FORWARDS) + L" and " + getKeyDesc(IN_STRAFE_BACKWARDS) + L" to move forward and backward. Try those now.", L"Tutorial");
+	KeyPressObjective* obj = new KeyPressObjective({ IN_THRUST_FORWARDS, IN_STRAFE_BACKWARDS });
+	obj->setCompletionCb(_tutorial1);
+	m_objectives.push_back(ObjElem{ obj });
+	obj = new KeyPressObjective({ IN_STRAFE_UP, IN_STRAFE_DOWN, IN_STRAFE_LEFT, IN_STRAFE_RIGHT });
+	obj->setCompletionCb(_tutorial2);
+	m_objectives.push_back(ObjElem{ obj });
+	obj = new KeyPressObjective({ IN_ROLL_LEFT, IN_ROLL_RIGHT, IN_AFTERBURNER });
+	obj->setCompletionCb(_tutorial3);
+	m_objectives.push_back(ObjElem{ obj });
+	obj = new KeyPressObjective({ IN_FIRE_REGULAR, IN_SELECT_TARGET });
+	obj->setCompletionCb(_tutorial4);
+	m_objectives.push_back(ObjElem{ obj });
+	obj = new KeyPressObjective({ IN_FIRE_HEAVY });
+	obj->setCompletionCb(_tutorial5);
+	m_objectives.push_back(ObjElem{ obj });
+	obj = new KeyPressObjective({ IN_FIRE_PHYS });
+	obj->setCompletionCb(_tutorial6);
+	m_objectives.push_back(ObjElem{ obj });
+	
+	RemoveEntityObjective* obj2 = new RemoveEntityObjective({
+		createDebrisTurret(m_objectivesStartPos[0] + vector3df(75.f), randomRotationVector(), vector3df(5.f)),
+		createDebrisTurret(m_objectivesStartPos[0] + vector3df(-75.f), randomRotationVector(), vector3df(5.f)),
+		});
+	//obj2->setRadioSpawn(m_objectivesStartPos[0]);
+	obj2->setCompletionCb(_tutorial7);
+	m_objectives.push_back(ObjElem{ obj2 });
+	GoToPointObjective* obj3 = new GoToPointObjective({});
+	obj3->setPoint(m_objectivesStartPos.back());
+	obj3->setDistance(400.f);
+	obj3->setRadioSpawn(m_objectivesStartPos.back());
+	m_objectives.push_back(ObjElem{ obj3 });
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////

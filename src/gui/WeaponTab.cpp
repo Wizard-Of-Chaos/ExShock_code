@@ -8,6 +8,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include "AudioDriver.h"
 
 void WeaponTab::build(IGUIElement* root, GuiDialog* dial, MENU_TYPE which)
 {
@@ -169,6 +170,12 @@ bool WeaponTab::onUpgradeSelect(const SEvent& event)
 		return false;
 	}
 	WeaponUpgradeInstance* inst = campaign->getWeaponUpgrade(event.GUIEvent.Caller->getID());
+
+	if (inst)
+		audioDriver->playMenuSound("fighter_equip.ogg");
+	else
+		audioDriver->playMenuSound("fighter_unequip.ogg");
+
 	campaign->assignWepUpgrade(curWep, currentSlot, inst);
 	displayWeapon(curWep);
 	m_clearList();

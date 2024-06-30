@@ -23,6 +23,7 @@ struct YesNoPopup
 	IGUIButton* no;
 	IGUIStaticText* title;
 	IGUIStaticText* body;
+	bool hasNoCb = false;
 };
 
 struct KeybindPopup
@@ -72,7 +73,7 @@ class GuiController
 
 		void setOkPopup(std::string title, std::string body, std::string button = "Got it");
 		void showOkPopup();
-		void setYesNoPopup(std::string title, std::string body, GuiCallback yesCb, std::string yes = "Yes", std::string no = "No");
+		void setYesNoPopup(std::string title, std::string body, GuiCallback yesCb, std::string yes = "Yes", std::string no = "No", GuiCallback noCb=GuiCallback());
 		void showYesNoPopup();
 		void setKeybindPopup(std::string title, GuiCallback bindCb, std::string body = "Press the key that you want bound to this control.");
 		void showKeybindPopup();

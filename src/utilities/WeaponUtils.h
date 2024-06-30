@@ -28,7 +28,7 @@ void wepHit_bolas(flecs::entity proj, flecs::entity impacted, btVector3 hitPoint
 void wepHit_energyGrapple(flecs::entity proj, flecs::entity impacted, btVector3 hitPoint);
 void wepHit_physHook(flecs::entity weapon, flecs::entity impacted, btVector3 hitPoint);
 void wepHit_physSlowdownExplosion(flecs::entity projId, flecs::entity impacted, btVector3 hitPoint);
-
+void wepHit_physShield(flecs::entity projId, flecs::entity impacted, btVector3 hitPoint);
 /*
 * If weapons have anything they should be doing in their downtime, that'll get called here. For instance, the gravity bolas
 * needs to keep track of how long the connection between two entities lasts.
@@ -37,6 +37,9 @@ void wepUpdate_basic(WeaponInfoComponent* wep, WeaponFiringComponent* fire, Powe
 void wepUpdate_bolas(WeaponInfoComponent* wep, WeaponFiringComponent* fire, PowerComponent* power, flecs::entity wepEnt, f32 dt);
 void wepUpdate_railgun(WeaponInfoComponent* wep, WeaponFiringComponent* fire, PowerComponent* power, flecs::entity wepEnt, f32 dt);
 void wepUpdate_goron(WeaponInfoComponent* wep, WeaponFiringComponent* fire, PowerComponent* power, flecs::entity wepEnt, f32 dt);
+void wepUpdate_electron(WeaponInfoComponent* wep, WeaponFiringComponent* fire, PowerComponent* power, flecs::entity wepEnt, f32 dt);
+void wepUpdate_physShield(WeaponInfoComponent* wep, WeaponFiringComponent* fire, PowerComponent* power, flecs::entity wepEnt, f32 dt);
+void wepUpdate_alienHealth(WeaponInfoComponent* wep, WeaponFiringComponent* fire, PowerComponent* power, flecs::entity wepEnt, f32 dt);
 
 void missileDeathCallback(flecs::entity miss);
 

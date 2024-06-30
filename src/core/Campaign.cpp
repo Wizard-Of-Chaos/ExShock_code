@@ -108,8 +108,8 @@ ShipInstance* Campaign::buildStarterShip()
 	auto inst = buildShipInstanceFromData(shipData[0]);
 	inst->weps[0] = createNewWeaponInstance(weaponData[STARTER_WEP]->wepComp)->id;
 	inst->weps[1] = createNewWeaponInstance(weaponData[STARTER_WEP]->wepComp)->id;
-	inst->physWep = createNewWeaponInstance(physWeaponData[2]->wepComp)->id;
-	inst->heavyWep = createNewWeaponInstance(heavyWeaponData[1]->wepComp)->id;
+	inst->physWep = createNewWeaponInstance(physWeaponData[1]->wepComp)->id;
+	inst->heavyWep = createNewWeaponInstance(heavyWeaponData[3]->wepComp)->id;
 
 	getWeapon(inst->weps[0])->usedBy = inst->id;
 	getWeapon(inst->weps[1])->usedBy = inst->id;
@@ -1066,8 +1066,6 @@ void Campaign::newCampaign()
 	assignWingmanToShip(getWingman(0), playerShip);
 
 	getRandomCharacterDialogues();
-	guiController->setDialogueTree(campaign->getCharacterDialogue(L"steven_newgame"));
-	guiController->setEventDialoguePopup();
 	baedsLogger::log("Done.\n");
 }
 

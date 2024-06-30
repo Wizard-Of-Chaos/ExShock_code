@@ -8,6 +8,10 @@
 #include "HealthComponent.h"
 #include "GameFunctions.h"
 #include "PlayerComponent.h"
+#include "Campaign.h"
+#include "LargeShipUtils.h"
+#include "IrrlichtComponent.h"
+#include "CrashLogger.h"
 
 HUDComms::HUDComms(IGUIElement* rootHUD, IGUIElement* rootPanel) : HUDElement(rootHUD)
 {
@@ -31,16 +35,15 @@ HUDComms::HUDComms(IGUIElement* rootHUD, IGUIElement* rootPanel) : HUDElement(ro
 		wingmenHP[i] = nullptr;
 		wingmenSP[i] = nullptr;
 		wingmenNames[i] = nullptr;
-		if (gameController->getWingman(i) == INVALID_ENTITY) continue;
+		if (campaign->getAssignedWingman(i) == nullptr)
+			continue;
+
 		position2di zero(0, 0);
 		u32 wingheight = ((totalheight * i) + totalheight);
 		position2di txtPos(panelRect.getWidth() * (.5f/5.f), wingheight);
 		position2di spPos(panelRect.getWidth()* (.5f / 5.f), height + wingheight);
 		position2di hpPos(panelRect.getWidth() * (.5f / 5.f), (height * 2) + wingheight);
-		auto ai = gameController->getWingman(i).get<AIComponent>();
-		std::string aiNameStr;
-		if (ai) aiNameStr = ai->AIName;
-		std::wstring namestr = wstr(aiNameStr);
+		std::wstring namestr = wstr(campaign->getAssignedWingman(i)->name);
 		IGUIStaticText* name = guienv->addStaticText(namestr.c_str(), rect<s32>(txtPos, sliceSize), false, true, dummy);
 		setHUDTextSmall(name);
 		wingmenNames[i] = name;
@@ -102,7 +105,6 @@ void HUDComms::updateElement(flecs::entity playerId)
 			m_displayContactList(sns);
 		}
 	}
-
 	switch (commState) {
 	case COMMSTATE::ROOT: {
 		m_handleWingmenHpDisplay(in);
@@ -114,14 +116,20 @@ void HUDComms::updateElement(flecs::entity playerId)
 		break;
 	}
 	case COMMSTATE::ORDER_ALL_UNITS: {
+		if (player->inputTimeDelay < .5f)
+			return;
 		m_handleAllOrderableUnitsOrder(in, player, sns);
 		break;
 	}
 	case COMMSTATE::ORDER_ALL_WINGMEN: {
+		if (player->inputTimeDelay < .5f)
+			return;
 		m_handleAllWingmenOrder(in, player, sns);
 		break;
 	}
 	case COMMSTATE::ORDER_SPECIFIC_UNIT: {
+		if (player->inputTimeDelay < .5f)
+			return;
 		m_handleTargetOrder(in, player, sns);
 		break;
 	}
@@ -139,7 +147,7 @@ void HUDComms::m_displayOrderList()
 	display += getKeyDesc(IN_COMMS_4) + L": Dock With Target\n";
 	display += getKeyDesc(IN_COMMS_5) + L": Help Me!\n";
 	display += getKeyDesc(IN_COMMS_6) + L": Return To Ship\n";
-	display += getKeyDesc(IN_COMMS_7) + L": Cancel\n";
+	display += getKeyDesc(SUMMON_CHAOS_THEORY) + L": Cancel\n";
 	panel->setText(display.c_str());
 }
 
@@ -160,6 +168,12 @@ void HUDComms::m_handleWingmenHpDisplay(const InputComponent* in)
 			if (wingmenNames[i]) wingmenNames[i]->setVisible(false);
 			continue;
 		}
+		else {
+			if (wingmenHP[i]) wingmenHP[i]->togVis(true);
+			if (wingmenSP[i]) wingmenSP[i]->togVis(true);
+			if (wingmenNames[i]) wingmenNames[i]->setVisible(true);
+
+		}
 		auto wingmanHP = gameController->getWingman(i).get<HealthComponent>();
 		if (wingmanHP) {
 			wingmenHP[i]->updateBar(wingmanHP->health, wingmanHP->maxHealth);
@@ -176,24 +190,47 @@ void HUDComms::m_displayContactList(const SensorComponent* sns)
 
 	std::wstring display = getKeyDesc(IN_COMMS_1) + L": Order All Wingmen\n" + getKeyDesc(IN_COMMS_2) + L": Order All\n";
 	for (u32 i = 0; i < sns->nearbyOrderableContacts.size(); ++i) {
-		if (i == 5) break;
+		if (i == 4) break;
 		display += getKeyDesc((INPUT)(IN_COMMS_3 + i)) + L": ";
 		auto& ctct = sns->nearbyOrderableContacts[i];
 		auto ai = ctct.ent.get<AIComponent>();
 		if (!ai) continue;
 		display += wstr(ai->AIName) + L"\n";
 	}
+	if (campaign->getFlag(L"MARTIN_CLOAK_COMPLETED")) {
+		display += getKeyDesc((INPUT)SUMMON_CHAOS_THEORY) + L": Summon Chaos Theory";
+	}
 	panel->setText(display.c_str());
 }
 
 void HUDComms::m_handleContactSelect(const InputComponent* in, PlayerComponent* player, const SensorComponent* sns)
 {
-	if (!in->commsInput() || player->timeSinceLastOrder < .4f) return;
+	if (!in->commsInput() || player->timeSinceLastOrder < .4f || player->inputTimeDelay < .2f) return;
 	if (in->isKeyDown(IN_COMMS_2)) {
 		commState = COMMSTATE::ORDER_ALL_UNITS;
 	}
 	else if (in->isKeyDown(IN_COMMS_1)) {
 		commState = COMMSTATE::ORDER_ALL_WINGMEN;
+	}
+	else if (in->isKeyDown(SUMMON_CHAOS_THEORY)) {
+		if (gameController->getChaosTheory().is_alive()) {
+			audioDriver->playMenuSound("order_negative.ogg");
+			gameController->addPopup(L"Steven Mitchell", L"Sir, we're already deployed in this zone.");
+		}
+		else {
+			gameController->addPopup(L"Steven Mitchell", L"Aye, sir. De-cloaking now!");
+			gameController->triggerShipSpawn([]() {
+				audioDriver->playMenuSound("../game/decloak_carrier.ogg");
+				auto node = gameController->getPlayer().get<IrrlichtComponent>()->node;
+				auto playerPos = node->getAbsolutePosition();
+				auto ent = createChaosTheory(playerPos + (getNodeUp(node) * 550.f), node->getRotation());
+				gameController->setChaosTheory(ent);
+				auto ai = ent.get_mut<AIComponent>();
+				ai->wingCommander = gameController->getPlayer();
+				ai->onWing = true;
+				decloakEffect(playerPos + (getNodeUp(node) * 550.f), 200.f);
+				});
+		}
 	}
 	else {
 		commState = COMMSTATE::ORDER_SPECIFIC_UNIT;
@@ -202,13 +239,14 @@ void HUDComms::m_handleContactSelect(const InputComponent* in, PlayerComponent* 
 		selectedEntity = sns->nearbyOrderableContacts[which].ent;
 	}
 	audioDriver->playMenuSound("menu_cancel.ogg");
-	player->timeSinceLastOrder = 0;
+	player->timeSinceLastOrder = 0.f;
+	player->inputTimeDelay = 0.f;
 	m_displayOrderList();
 }
 void HUDComms::m_handleTargetOrder(const InputComponent* in, PlayerComponent* player, const SensorComponent* sns)
 {
 	if (!in->commsInput() || player->timeSinceLastOrder < .4f) return;
-	if (in->whichCommsInput() == IN_COMMS_7) {
+	if (in->whichCommsInput() == SUMMON_CHAOS_THEORY) {
 		commState = COMMSTATE::ROOT;
 		m_displayContactList(sns);
 		return;
@@ -217,6 +255,7 @@ void HUDComms::m_handleTargetOrder(const InputComponent* in, PlayerComponent* pl
 	ORDER_TYPE ord = (ORDER_TYPE)(in->whichCommsInput() - IN_COMMS_1);
 	ai->registerOrder(ord, gameController->getPlayer(), (ord == ORDER_TYPE::ORD_HONK_HELP) ? player->beingTargetedBy : sns->targetContact);
 	player->timeSinceLastOrder = 0;
+	player->inputTimeDelay = 0.f;
 	commState = COMMSTATE::ROOT;
 	m_displayContactList(sns);
 }
@@ -224,12 +263,13 @@ void HUDComms::m_handleTargetOrder(const InputComponent* in, PlayerComponent* pl
 void HUDComms::m_handleAllWingmenOrder(const InputComponent* in, PlayerComponent* player, const SensorComponent* sns)
 {
 	if (!in->commsInput() || player->timeSinceLastOrder < .4f) return;
-	if (in->whichCommsInput() == IN_COMMS_7) {
+	if (in->whichCommsInput() == SUMMON_CHAOS_THEORY) {
 		commState = COMMSTATE::ROOT;
 		m_displayContactList(sns);
 		return;
 	}
 	ORDER_TYPE ord = (ORDER_TYPE)(in->whichCommsInput() - IN_COMMS_1);
+
 	for (u32 i = 0; i < MAX_WINGMEN_ON_WING; ++i) {
 		auto man = gameController->getWingman(i);
 		if (man == INVALID_ENTITY || !man.is_alive()) continue;
@@ -237,13 +277,14 @@ void HUDComms::m_handleAllWingmenOrder(const InputComponent* in, PlayerComponent
 		ai->registerOrder(ord, gameController->getPlayer(), (ord == ORDER_TYPE::ORD_HONK_HELP) ? player->beingTargetedBy : sns->targetContact);
 	}
 	player->timeSinceLastOrder = 0;
+	player->inputTimeDelay = 0.f;
 	commState = COMMSTATE::ROOT;
 	m_displayContactList(sns);
 }
 void HUDComms::m_handleAllOrderableUnitsOrder(const InputComponent* in, PlayerComponent* player, const SensorComponent* sns)
 {
 	if (!in->commsInput() || player->timeSinceLastOrder < .4f) return;
-	if (in->whichCommsInput() == IN_COMMS_7) {
+	if (in->whichCommsInput() == SUMMON_CHAOS_THEORY) {
 		commState = COMMSTATE::ROOT;
 		m_displayContactList(sns);
 
@@ -258,6 +299,7 @@ void HUDComms::m_handleAllOrderableUnitsOrder(const InputComponent* in, PlayerCo
 		ai->registerOrder(ord, gameController->getPlayer(), (ord == ORDER_TYPE::ORD_HONK_HELP) ? player->beingTargetedBy : sns->targetContact);
 	}
 	player->timeSinceLastOrder = 0;
+	player->inputTimeDelay = 0.f;
 	commState = COMMSTATE::ROOT;
 	m_displayContactList(sns);
 

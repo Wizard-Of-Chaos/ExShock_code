@@ -6,6 +6,48 @@
 #include "CrashLogger.h"
 #include <iomanip>
 
+static NetworkId networkIdMin = 1;
+static NetworkId networkIdMax = 262144;
+
+static NetworkId nextNewNetworkId = 1;
+static std::vector<NetworkId> recyledIds = std::vector<NetworkId>();
+void setNetworkIdRange(NetworkId min, NetworkId max)
+{
+	networkIdMin = min;
+	networkIdMax = max;
+	if (networkIdMin == 0) networkIdMin = 1;
+	nextNewNetworkId = min;
+	baedsLogger::log("Setting NETWORK RANGE from " + std::to_string(min) + " to " + std::to_string(max) + "\n");
+}
+NetworkId generateNewNetworkId()
+{
+	if (recyledIds.size()) {
+		NetworkId back = recyledIds.back();
+		recyledIds.pop_back();
+		return back;
+	}
+	return nextNewNetworkId++;
+}
+
+void destroyNetworkId(NetworkId id)
+{
+	if (id >= networkIdMax || id < networkIdMin) return; //do not recycle IDs for generation from outside our range
+	recyledIds.push_back(id);
+}
+
+bool networkIdInMyRange(NetworkId id)
+{
+	if (id <= networkIdMax && id >= networkIdMin)
+		return true;
+	return false;
+}
+
+void clearAllNetworkIds()
+{
+	nextNewNetworkId = 1;
+	recyledIds.clear();
+}
+
 size_type bitsNeeded(int min, int max)
 {
 	int delta = max - min;
@@ -27,7 +69,7 @@ GigaPacket::GigaPacket()
 PacketData::PacketData() 
 {
 	//entityId = 0;
-	componentId = 0;
+	componentId = NC_RIGID_BODY;
 }
 
 uint32_t compress_float(const float f, const float min, const float max, const float res)
@@ -69,6 +111,9 @@ namespace bitpacker
 	template <>
 	void store(span<byte_type> buffer, size_type offset, BulletRigidBodyComponent& value) noexcept
 	{
+#if _DEBUG
+		size_type initial_offset = offset;
+#endif
 		insert(buffer, offset + 0, POSITION_BITS_NEEDED, compress_float(value.rigidBody->getWorldTransform().getOrigin().getX(), MIN_POSITION, MAX_POSITION, POSITION_RES));
 		insert(buffer, offset + POSITION_BITS_NEEDED, POSITION_BITS_NEEDED, compress_float(value.rigidBody->getWorldTransform().getOrigin().getY(), MIN_POSITION, MAX_POSITION, POSITION_RES));
 		insert(buffer, offset + 2 * POSITION_BITS_NEEDED, POSITION_BITS_NEEDED, compress_float(value.rigidBody->getWorldTransform().getOrigin().getZ(), MIN_POSITION, MAX_POSITION, POSITION_RES));
@@ -102,17 +147,17 @@ namespace bitpacker
 			orientation *= -1;
 		}
 		// index of missing orientation component to buffer
-		insert(buffer, offset, 2, index);
+		//insert(buffer, offset, 2, index);
 
-		offset += 2;
+		//offset += 2;
 		for (int i = 0; i < 4; i++)
 		{
-			if (i != index)
-			{
+			//if (i != index)
+			//{
 				// serialize component
-				insert(buffer, offset, ORIENTATION_BITS_NEEDED, compress_float(orientation[i], -sqrt(2) / 2, sqrt(2) / 2, ORIENTATION_RES));
+				insert(buffer, offset, ORIENTATION_BITS_NEEDED, compress_float(orientation[i], -1, 1, ORIENTATION_RES));
 				offset += ORIENTATION_BITS_NEEDED;
-			}
+			//}
 		}
 
 		// angular velocity
@@ -120,11 +165,18 @@ namespace bitpacker
 		insert(buffer, offset + 0, ANGULAR_VELOCITY_BITS_NEEDED, compress_float(value.rigidBody->getAngularVelocity().getX(), MIN_ANGULAR_VELOCITY, MAX_ANGULAR_VELOCITY, ANGULAR_VELOCITY_RES));
 		insert(buffer, offset + ANGULAR_VELOCITY_BITS_NEEDED, ANGULAR_VELOCITY_BITS_NEEDED, compress_float(value.rigidBody->getAngularVelocity().getY(), MIN_ANGULAR_VELOCITY, MAX_ANGULAR_VELOCITY, ANGULAR_VELOCITY_RES));
 		insert(buffer, offset + 2 * ANGULAR_VELOCITY_BITS_NEEDED, ANGULAR_VELOCITY_BITS_NEEDED, compress_float(value.rigidBody->getAngularVelocity().getZ(), MIN_ANGULAR_VELOCITY, MAX_ANGULAR_VELOCITY, ANGULAR_VELOCITY_RES));
+		offset += 3 * ANGULAR_VELOCITY_BITS_NEEDED;
+#if _DEBUG
+		assert(offset - initial_offset == RBC_BITS_NEEDED);
+#endif
 	}
 
 	template <>
 	void get(span<const byte_type> buffer, size_type offset, BulletRigidBodyComponent& out) noexcept
 	{
+#if _DEBUG
+		size_type initial_offset = offset;
+#endif
 		// deserialize position
 		btVector3 position;
 
@@ -158,29 +210,29 @@ namespace bitpacker
 		offset += 3 * VELOCITY_BITS_NEEDED;
 
 		// deserialize index of missing orientation component
-		uint32_t index = extract<uint32_t>(buffer, offset, 2);
-		offset += 2;
+		//uint32_t index = extract<uint32_t>(buffer, offset, 2);
+		//offset += 2;
 		
-
-
 		btQuaternion orientation;
 		// w.l.o.g., assume w is largest component
 		// w^2 + x^2 + y^2 + z^2 = 1 => w = sqrt(1-x^2-y^2-z^2)
 		// when compressing we ensured largest component is always positive
-		float missing_component = 1.0f;
+		//float missing_component = 1.0f;
 		for (int i = 0; i < 4; i++)
 		{
-			if (i != index)
-			{
+			//if (i != index)
+			//{
 				compressed_float = extract<uint32_t>(buffer, offset, ORIENTATION_BITS_NEEDED);
-				decompressed_float = decompress_float(compressed_float, -sqrt(2) / 2, sqrt(2) / 2, ORIENTATION_RES);
+				decompressed_float = decompress_float(compressed_float, -1, 1, ORIENTATION_RES);
 				orientation[i] = decompressed_float;
-				missing_component -= decompressed_float * decompressed_float;
+				//missing_component -= decompressed_float * decompressed_float;
 				offset += ORIENTATION_BITS_NEEDED;
-			}
+			//}
 		}
 
-		orientation[index] = sqrt(missing_component);
+
+
+		//orientation[index] = sqrt(missing_component);
 
 		// ensure magnitude hasn't deviated from 1 due to compression artifacts, should cause some imperceptible snapping
 		orientation.normalize();
@@ -199,6 +251,11 @@ namespace bitpacker
 		decompressed_float = decompress_float(compressed_float, MIN_ANGULAR_VELOCITY, MAX_ANGULAR_VELOCITY, ANGULAR_VELOCITY_RES);
 		angularVelocity.setZ(decompressed_float);
 
+		offset += 3 * ANGULAR_VELOCITY_BITS_NEEDED;
+#if _DEBUG
+		assert(offset - initial_offset == RBC_BITS_NEEDED);
+#endif
+
 		// build new transform and apply extracted velocities
 		btTransform transform;
 
@@ -216,11 +273,16 @@ namespace bitpacker
 	template <>
 	void store(span<byte_type> buffer, size_type offset, MapGenObstacle& value) noexcept
 	{
+#if _DEBUG
+		size_type initial_offset = offset;
+#endif
 		insert(buffer, offset + 0, 1, value.isShip);
 		insert(buffer, offset + 1, 1, value.isWeapon);
 		insert(buffer, offset + 2, 8 * sizeof(uint32_t), static_cast<uint32_t>(value.id));
-		insert(buffer, offset + 2 + 8 * sizeof(uint32_t), 8 * sizeof(flecs::entity_t), value.entity);
-		offset += 8 * sizeof(uint32_t) + 2 + 8 * sizeof(flecs::entity_t);
+		insert(buffer, offset + 2 + 8 * sizeof(uint32_t), 8 * sizeof(NetworkId), value.networkId);
+		offset += 8 * sizeof(uint32_t) + 2 + 8 * sizeof(NetworkId);
+		insert(buffer, offset, 5, static_cast<uint32_t>(value.type));
+		offset += 5;
 		
 		insert(buffer, offset + 0, 8 * sizeof(uint32_t), *reinterpret_cast<uint32_t*>(&value.position.X));
 		insert(buffer, offset + 8 * sizeof(uint32_t), 8 * sizeof(uint32_t), *reinterpret_cast<uint32_t*>(&value.position.Y));
@@ -246,19 +308,52 @@ namespace bitpacker
 		offset += 4;
 		for (int i = 0; i < sizeof(value.extraFloats) / sizeof(f32); i++)
 		{
-			insert(buffer, offset + 0, 8 * sizeof(uint32_t), *reinterpret_cast<uint32_t*>(&value.extraFloats));
+			insert(buffer, offset, 8 * sizeof(uint32_t), *reinterpret_cast<uint32_t*>(&value.extraFloats));
 			offset += 8 * sizeof(uint32_t);
 		}
+
+		for (int i = 0; i < sizeof(value.turretNetworkIds) / sizeof(NetworkId); i++)
+		{
+			insert(buffer, offset + 0, 8 * sizeof(NetworkId), value.turretNetworkIds[i]);
+			offset += 8 * sizeof(NetworkId);
+		}
+
+		for (int i = 0; i < sizeof(value.turretIds) / sizeof(dataId); i++)
+		{
+			insert(buffer, offset, 8 * sizeof(uint32_t), static_cast<uint32_t>(value.turretIds[i]));
+			offset += 8 * sizeof(uint32_t);
+		}
+
+		for (int i = 0; i < sizeof(value.turretArchetype) / sizeof(bool); i++)
+		{
+			insert(buffer, offset, 1, value.turretArchetype[i]);
+			offset += 1;
+		}
+
+		for (int i = 0; i < sizeof(value.turretWepIds) / sizeof(dataId); i++)
+		{
+			insert(buffer, offset, 8 * sizeof(uint32_t), static_cast<uint32_t>(value.turretWepIds[i]));
+			offset += 8 * sizeof(uint32_t);
+		}
+#if _DEBUG
+		assert(offset - initial_offset == MAP_GEN_OBSTACLE_BITS_NEEDED);
+#endif
 	}
 	
 	template<>
 	void get(span<const byte_type> buffer, size_type offset, MapGenObstacle& out) noexcept
 	{
+#if _DEBUG
+		size_type initial_offset = offset;
+#endif
 		out.isShip = extract<bool>(buffer, offset + 0, 1);
 		out.isWeapon = extract<bool>(buffer, offset + 1, 1);
 		out.id = extract<uint32_t>(buffer, offset + 2, 8 * sizeof(uint32_t));
-		out.entity = extract<flecs::entity_t>(buffer, offset + 2 + 8 * sizeof(uint32_t), 8 * sizeof(flecs::entity_t));
-		offset += 8 * sizeof(uint32_t) + 2 + 8 * sizeof(flecs::entity_t);
+		out.networkId = extract<NetworkId>(buffer, offset + 2 + 8 * sizeof(NetworkId), 8 * sizeof(NetworkId));
+		offset += 8 * sizeof(uint32_t) + 2 + 8 * sizeof(NetworkId);
+
+		out.type = static_cast<OBSTACLE>(extract<uint32_t>(buffer, offset, 5));
+		offset += 5;
 
 		uint32_t temp;
 		temp = extract<uint32_t>(buffer, offset + 0, 8 * sizeof(uint32_t));
@@ -301,24 +396,53 @@ namespace bitpacker
 			out.extraFloats[i] = *reinterpret_cast<f32*>(&temp);
 			offset += 8 * sizeof(uint32_t);
 		}
+		for (int i = 0; i < sizeof(out.turretNetworkIds) / sizeof(NetworkId); i++)
+		{
+			out.turretNetworkIds[i] = extract<NetworkId>(buffer, offset + 0, 8 * sizeof(NetworkId));
+			offset += 8 * sizeof(NetworkId);
+		}
+
+		for (int i = 0; i < sizeof(out.turretIds) / sizeof(dataId); i++)
+		{
+			out.turretIds[i] = extract<uint32_t>(buffer, offset, 8 * sizeof(uint32_t));
+			offset += 8 * sizeof(uint32_t);
+		}
+
+		for (int i = 0; i < sizeof(out.turretArchetype) / sizeof(bool); i++)
+		{
+			out.turretArchetype[i] = extract<bool>(buffer, offset, 1);
+			offset += 1;
+		}
+
+		for (int i = 0; i < sizeof(out.turretWepIds) / sizeof(dataId); i++)
+		{
+			out.turretWepIds[i] = extract<uint32_t>(buffer, offset, 8 * sizeof(uint32_t));
+			offset += 8 * sizeof(uint32_t);
+		}
+#if _DEBUG
+		assert(offset - initial_offset == MAP_GEN_OBSTACLE_BITS_NEEDED);
+#endif
 	}
 
 	template <>
 	void store(span<byte_type> buffer, size_type offset, MapGenShip& value) noexcept
 	{
+#if _DEBUG
+		size_type initial_offset = offset;
+#endif
 		insert(buffer, offset + 0, 1, value.isArchetype);
 		insert(buffer, offset + 1, 8*sizeof(uint32_t), static_cast<uint32_t>(value.id));
-		insert(buffer, offset + 1 + 8 * sizeof(uint32_t), 8 * sizeof(flecs::entity_t), value.entity);
-		offset += 1 + 8 * sizeof(uint32_t) + 8 * sizeof(flecs::entity_t);
+		insert(buffer, offset + 1 + 8 * sizeof(uint32_t), 8 * sizeof(NetworkId), value.networkId);
+		offset += 1 + 8 * sizeof(uint32_t) + 8 * sizeof(NetworkId);
 		for (int i = 0; i < sizeof(value.wepArchetype) / sizeof(bool); i++)
 		{
 			insert(buffer, offset + 0, 1, value.wepArchetype[i]);
 			offset += 1;
 		}
-		for (int i = 0; i < sizeof(value.hardpointEntities) / sizeof(flecs::entity_t); i++)
+		for (int i = 0; i < sizeof(value.hardpointNetworkIds) / sizeof(NetworkId); i++)
 		{
-			insert(buffer, offset + 0, sizeof(flecs::entity_t), value.hardpointEntities[i]);
-			offset += 8 * sizeof(flecs::entity_t);
+			insert(buffer, offset + 0, 8*sizeof(NetworkId), value.hardpointNetworkIds[i]);
+			offset += 8 * sizeof(NetworkId);
 		}
 		for (int i = 0; i < sizeof(value.hardpoints) / sizeof(dataId); i++)
 		{
@@ -328,11 +452,11 @@ namespace bitpacker
 
 		insert(buffer, offset + 0, 1, value.physArchetype);
 		insert(buffer, offset + 1, 8 * sizeof(uint32_t), static_cast<uint32_t>(value.phys));
-		insert(buffer, offset + 1 + 8 * sizeof(uint32_t), 8 * sizeof(flecs::entity_t), value.physEntity);
-		insert(buffer, offset + 1 + 8 * sizeof(uint32_t) + 8 * sizeof(flecs::entity_t), 1, value.heavyArchetype);
-		insert(buffer, offset + 2 + 8 * sizeof(uint32_t) + 8 * sizeof(flecs::entity_t), 8 * sizeof(uint32_t), static_cast<uint32_t>(value.heavy));
-		insert(buffer, offset + 2 + 2 * 8 * sizeof(uint32_t) + 8 * sizeof(flecs::entity_t), 8 * sizeof(flecs::entity_t), value.heavyEntity);
-		offset += 2 + 2 * 8 * sizeof(uint32_t) + 2 * 8 * sizeof(flecs::entity_t);
+		insert(buffer, offset + 1 + 8 * sizeof(uint32_t), 8 * sizeof(NetworkId), value.physNetworkId);
+		insert(buffer, offset + 1 + 8 * sizeof(uint32_t) + 8 * sizeof(NetworkId), 1, value.heavyArchetype);
+		insert(buffer, offset + 2 + 8 * sizeof(uint32_t) + 8 * sizeof(NetworkId), 8 * sizeof(uint32_t), static_cast<uint32_t>(value.heavy));
+		insert(buffer, offset + 2 + 2 * 8 * sizeof(uint32_t) + 8 * sizeof(NetworkId), 8 * sizeof(NetworkId), value.heavyNetworkId);
+		offset += 2 + 2 * 8 * sizeof(uint32_t) + 2 * 8 * sizeof(NetworkId);
 
 		insert(buffer, offset + 0, 8 * sizeof(uint32_t), *reinterpret_cast<uint32_t*>(&value.position.X));
 		insert(buffer, offset + 8 * sizeof(uint32_t), 8 * sizeof(uint32_t), *reinterpret_cast<uint32_t*>(&value.position.Y));
@@ -345,24 +469,55 @@ namespace bitpacker
 		offset += 3 * 8 * sizeof(uint32_t);
 
 		insert(buffer, offset + 0, 4, static_cast<uint32_t>(value.faction));
+		offset += 4;
+		for (int i = 0; i < sizeof(value.turretNetworkIds) / sizeof(NetworkId); i++)
+		{
+			insert(buffer, offset + 0, 8 * sizeof(NetworkId), value.turretNetworkIds[i]);
+			offset += 8 * sizeof(NetworkId);
+		}
+
+		for (int i = 0; i < sizeof(value.turretIds) / sizeof(dataId); i++)
+		{
+			insert(buffer, offset + 0, 8 * sizeof(uint32_t), static_cast<uint32_t>(value.turretIds[i]));
+			offset += 8 * sizeof(uint32_t);
+		}
+
+		for (int i = 0; i < sizeof(value.turretArchetype) / sizeof(bool); i++)
+		{
+			insert(buffer, offset + 0, 1, value.turretArchetype[i]);
+			offset += 1;
+		}
+
+		for (int i = 0; i < sizeof(value.turretWepIds) / sizeof(dataId); i++)
+		{
+			insert(buffer, offset + 0, 8 * sizeof(uint32_t), static_cast<uint32_t>(value.turretWepIds[i]));
+			offset += 8 * sizeof(uint32_t);
+		}
+#if _DEBUG
+		assert(offset - initial_offset == MAP_GEN_SHIP_BITS_NEEDED);
+#endif
+		
 	}
 	template <>
 	void get(span<const byte_type> buffer, size_type offset, MapGenShip& out) noexcept
 	{
+#if _DEBUG
+		size_type initial_offset = offset;
+#endif
 		out.isArchetype = extract<bool>(buffer, offset + 0, 1);
 		out.id = extract<uint32_t>(buffer, offset + 1, 8 * sizeof(uint32_t));
-		out.entity = extract<flecs::entity_t>(buffer, offset + 1 + 8 * sizeof(uint32_t), 8 * sizeof(flecs::entity_t));
-		offset += 1 + 8 * sizeof(uint32_t) + 8 * sizeof(flecs::entity_t);
+		out.networkId = extract<NetworkId>(buffer, offset + 1 + 8 * sizeof(uint32_t), 8 * sizeof(NetworkId));
+		offset += 1 + 8 * sizeof(uint32_t) + 8 * sizeof(NetworkId);
 
 		for (int i = 0; i < sizeof(out.wepArchetype) / sizeof(bool); i++)
 		{
 			out.wepArchetype[i] = extract<bool>(buffer, offset + 0, 1);
 			offset += 1;
 		}
-		for (int i = 0; i < sizeof(out.hardpointEntities) / sizeof(flecs::entity_t); i++)
+		for (int i = 0; i < sizeof(out.hardpointNetworkIds) / sizeof(NetworkId); i++)
 		{
-			out.hardpointEntities[i] = extract<flecs::entity_t>(buffer, offset + 0, sizeof(flecs::entity_t));
-			offset += 8 * sizeof(flecs::entity_t);
+			out.hardpointNetworkIds[i] = extract<NetworkId>(buffer, offset + 0, 8*sizeof(NetworkId));
+			offset += 8 * sizeof(NetworkId);
 		}
 		for (int i = 0; i < sizeof(out.hardpoints) / sizeof(dataId); i++)
 		{
@@ -372,11 +527,11 @@ namespace bitpacker
 
 		out.physArchetype = extract<bool>(buffer, offset + 0, 1);
 		out.phys = extract<uint32_t>(buffer, offset + 1, 8 * sizeof(uint32_t));
-		out.physEntity = extract<flecs::entity_t>(buffer, offset + 1 + 8 * sizeof(uint32_t), 8 * sizeof(flecs::entity_t));
-		out.heavyArchetype = extract<bool>(buffer, offset + 1 + 8 * sizeof(uint32_t) + 8 * sizeof(flecs::entity_t), 1);
-		out.heavy = extract<uint32_t>(buffer, offset + 2 + 8 * sizeof(uint32_t) + 8 * sizeof(flecs::entity_t), 8 * sizeof(uint32_t));
-		out.heavyEntity = extract<flecs::entity_t>(buffer, offset + 2 + 2 * 8 * sizeof(uint32_t) + 8 * sizeof(flecs::entity_t), 8 * sizeof(flecs::entity_t));
-		offset += 2 + 2 * 8 * sizeof(uint32_t) + 2 * 8 * sizeof(flecs::entity_t);
+		out.physNetworkId = extract<NetworkId>(buffer, offset + 1 + 8 * sizeof(uint32_t), 8 * sizeof(NetworkId));
+		out.heavyArchetype = extract<bool>(buffer, offset + 1 + 8 * sizeof(uint32_t) + 8 * sizeof(NetworkId), 1);
+		out.heavy = extract<uint32_t>(buffer, offset + 2 + 8 * sizeof(uint32_t) + 8 * sizeof(NetworkId), 8 * sizeof(uint32_t));
+		out.heavyNetworkId = extract<NetworkId>(buffer, offset + 2 + 2 * 8 * sizeof(uint32_t) + 8 * sizeof(NetworkId), 8 * sizeof(NetworkId));
+		offset += 2 + 2 * 8 * sizeof(uint32_t) + 2 * 8 * sizeof(NetworkId);
 
 		uint32_t temp;
 		temp = extract<uint32_t>(buffer, offset + 0, 8 * sizeof(uint32_t));
@@ -396,10 +551,40 @@ namespace bitpacker
 		offset += 3 * 8 * sizeof(uint32_t);
 
 		out.faction = static_cast<FACTION_TYPE>(extract<uint32_t>(buffer, offset + 0, 4));
+		offset += 4;
+		for (int i = 0; i < sizeof(out.turretNetworkIds) / sizeof(NetworkId); i++)
+		{
+			out.turretNetworkIds[i] = extract<NetworkId>(buffer, offset + 0, 8 * sizeof(NetworkId));
+			offset += 8 * sizeof(NetworkId);
+		}
+
+		for (int i = 0; i < sizeof(out.turretIds) / sizeof(dataId); i++)
+		{
+			out.turretIds[i] = extract<uint32_t>(buffer, offset + 0, 8 * sizeof(uint32_t));
+			offset += 8 * sizeof(uint32_t);
+		}
+
+		for (int i = 0; i < sizeof(out.turretArchetype) / sizeof(bool); i++)
+		{
+			out.turretArchetype[i] = extract<bool>(buffer, offset + 0, 1);
+			offset += 1;
+		}
+
+		for (int i = 0; i < sizeof(out.turretWepIds) / sizeof(dataId); i++)
+		{
+			out.turretWepIds[i] = extract<uint32_t>(buffer, offset + 0, 8 * sizeof(uint32_t));
+			offset += 8 * sizeof(uint32_t);
+		}
+#if _DEBUG
+		assert(offset - initial_offset == MAP_GEN_SHIP_BITS_NEEDED);
+#endif
 	}
 	template <>
 	void store(span<byte_type> buffer, size_type offset, HealthComponent& value) noexcept
 	{
+#if _DEBUG
+		size_type initial_offset = offset;
+#endif
 		insert(buffer, offset, HEALTH_BITS_NEEDED, compress_float(value.health, MIN_HEALTH, MAX_HEALTH, HEALTH_RES));
 		offset += HEALTH_BITS_NEEDED;
 		insert(buffer, offset, HEALTH_BITS_NEEDED, compress_float(value.maxHealth, MIN_HEALTH, MAX_HEALTH, HEALTH_RES));
@@ -408,16 +593,23 @@ namespace bitpacker
 		offset += HEALTH_REGEN_BITS_NEEDED;
 		insert(buffer, offset, SHIELDS_BITS_NEEDED, compress_float(value.shields, MIN_SHIELDS, MAX_SHIELDS, SHIELDS_RES));
 		offset += SHIELDS_BITS_NEEDED;
-		insert(buffer, offset, SHIELDS_BITS_NEEDED, compress_float(value.shields, MIN_SHIELDS, MAX_SHIELDS, SHIELDS_RES));
+		insert(buffer, offset, SHIELDS_BITS_NEEDED, compress_float(value.maxShields, MIN_SHIELDS, MAX_SHIELDS, SHIELDS_RES));
 		offset += SHIELDS_BITS_NEEDED;
 		insert(buffer, offset, RECHARGE_RATE_BITS_NEEDED, compress_float(value.rechargeRate, MIN_RECHARGE_RATE, MAX_RECHARGE_RATE, RECHARGE_RATE_RES));
 		offset += RECHARGE_RATE_BITS_NEEDED;
 		insert(buffer, offset, RECHARGE_DELAY_BITS_NEEDED, compress_float(value.rechargeDelay, MIN_RECHARGE_DELAY, MAX_RECHARGE_DELAY, RECHARGE_DELAY_RES));
-		offset += RECHARGE_DELAY_RES;
+		offset += RECHARGE_DELAY_BITS_NEEDED;
+#if _DEBUG
+		assert(offset - initial_offset == HEALTH_COMPONENT_BITS_NEEDED);
+#endif
 	}
+
 	template <>
 	void get(span<const byte_type> buffer, size_type offset, HealthComponent& out) noexcept
 	{
+#if _DEBUG
+		size_type initial_offset = offset;
+#endif
 		out.health = decompress_float(extract<uint32_t>(buffer, offset, HEALTH_BITS_NEEDED), MIN_HEALTH, MAX_HEALTH, HEALTH_RES);
 		offset += HEALTH_BITS_NEEDED;
 		out.maxHealth = decompress_float(extract<uint32_t>(buffer, offset, HEALTH_BITS_NEEDED), MIN_HEALTH, MAX_HEALTH, HEALTH_RES);
@@ -426,15 +618,25 @@ namespace bitpacker
 		offset += HEALTH_REGEN_BITS_NEEDED;
 		out.shields = decompress_float(extract<uint32_t>(buffer, offset, SHIELDS_BITS_NEEDED), MIN_SHIELDS, MAX_SHIELDS, SHIELDS_RES);
 		offset += SHIELDS_BITS_NEEDED;
+		out.maxShields = decompress_float(extract<uint32_t>(buffer, offset, SHIELDS_BITS_NEEDED), MIN_SHIELDS, MAX_SHIELDS, SHIELDS_RES);
+		offset += SHIELDS_BITS_NEEDED;
 		out.rechargeRate = decompress_float(extract<uint32_t>(buffer, offset, RECHARGE_RATE_BITS_NEEDED), MIN_RECHARGE_RATE, MAX_RECHARGE_RATE, RECHARGE_RATE_RES);
 		offset += RECHARGE_RATE_BITS_NEEDED;
 		out.rechargeDelay = decompress_float(extract<uint32_t>(buffer, offset, RECHARGE_DELAY_BITS_NEEDED), MIN_RECHARGE_DELAY, MAX_RECHARGE_DELAY, RECHARGE_DELAY_RES);
+		offset += RECHARGE_DELAY_BITS_NEEDED;
+#if _DEBUG
+		assert(offset - initial_offset == HEALTH_COMPONENT_BITS_NEEDED);
+#endif
 	}
+
 	template <>
 	void store(span<byte_type> buffer, size_type offset, Network_ShotFired& value) noexcept
 	{
-		insert(buffer, offset, 8 * sizeof(flecs::entity_t), value.firingWeapon);
-		offset += 8 * sizeof(flecs::entity_t);
+#if _DEBUG
+		size_type initial_offset = offset;
+#endif
+		insert(buffer, offset, 8 * sizeof(uint32_t), value.firingWeapon);
+		offset += 8 * sizeof(uint32_t);
 		for (int i = 0; i < sizeof(value.directions) / sizeof(vector3df); i++)
 		{
 			insert(buffer, offset, 8 * sizeof(uint32_t), *reinterpret_cast<uint32_t*>(&value.directions[i].X));
@@ -452,17 +654,24 @@ namespace bitpacker
 		insert(buffer, offset, 8*sizeof(uint32_t), *reinterpret_cast<uint32_t*>(&value.spawn.Z));
 		offset += 8 * sizeof(uint32_t);
 
-		for (int i = 0; i < sizeof(value.projIds) / sizeof(flecs::entity_t); i++)
+		for (int i = 0; i < sizeof(value.projIds) / sizeof(uint32_t); i++)
 		{
-			insert(buffer, offset, 8 * sizeof(flecs::entity_t), value.projIds[i]);
-			offset += 8 * sizeof(flecs::entity_t);
+			insert(buffer, offset, 8 * sizeof(uint32_t), value.projIds[i]);
+			offset += 8 * sizeof(uint32_t);
 		}
+#if _DEBUG
+		assert(offset - initial_offset == NETWORK_SHOT_BITS_NEEDED);
+#endif
 	}
+
 	template <>
 	void get(span<const byte_type> buffer, size_type offset, Network_ShotFired& out) noexcept
 	{
-		out.firingWeapon = extract<flecs::entity_t>(buffer, offset, 8 * sizeof(flecs::entity_t));
-		offset += 8 * sizeof(flecs::entity_t);
+#if _DEBUG
+		size_type initial_offset = offset;
+#endif
+		out.firingWeapon = extract<uint32_t>(buffer, offset, 8 * sizeof(uint32_t));
+		offset += 8 * sizeof(uint32_t);
 		uint32_t temp = 0;
 		for (int i = 0; i < sizeof(out.directions) / sizeof(vector3df); i++)
 		{
@@ -486,21 +695,97 @@ namespace bitpacker
 		out.spawn.Z = *reinterpret_cast<f32*>(&temp);
 		offset += 8 * sizeof(uint32_t);
 
-		for (int i = 0; i < sizeof(out.projIds) / sizeof(flecs::entity_t); i++)
+		for (int i = 0; i < sizeof(out.projIds) / sizeof(uint32_t); i++)
 		{
-			out.projIds[i] = extract<flecs::entity_t>(buffer, offset, 8 * sizeof(flecs::entity_t));
-			offset += 8 * sizeof(flecs::entity_t);
+			out.projIds[i] = extract<uint32_t>(buffer, offset, 8 * sizeof(uint32_t));
+			offset += 8 * sizeof(uint32_t);
 		}
+#if _DEBUG
+		assert(offset - initial_offset == NETWORK_SHOT_BITS_NEEDED);
+#endif
+	}
+
+	template <>
+	void store(span<byte_type> buffer, size_type offset, Net_DamageInstance& value) noexcept
+	{
+#if _DEBUG
+		size_type initial_offset = offset;
+#endif
+		insert(buffer, offset, 8 * sizeof(u32), value.time);
+		offset += 8 * sizeof(u32);
+		insert(buffer, offset, 8 * sizeof(NetworkId), value.from);
+		offset += 8 * sizeof(NetworkId);
+		insert(buffer, offset, 8 * sizeof(NetworkId), value.to);
+		offset += 8 * sizeof(NetworkId);
+		insert(buffer, offset, 8 * sizeof(uint32_t), *reinterpret_cast<uint32_t*>(&value.hitPos.X));
+		offset += 8 * sizeof(uint32_t);
+		insert(buffer, offset, 8 * sizeof(uint32_t), *reinterpret_cast<uint32_t*>(&value.hitPos.Y));
+		offset += 8 * sizeof(uint32_t);
+		insert(buffer, offset, 8 * sizeof(uint32_t), *reinterpret_cast<uint32_t*>(&value.hitPos.Z));
+		offset += 8 * sizeof(uint32_t);
+		insert(buffer, offset, DAMAGE_BITS, static_cast<uint32_t>(value.type));
+		offset += DAMAGE_BITS;
+		insert(buffer, offset, 8 * sizeof(uint32_t), *reinterpret_cast<uint32_t*>(&value.amount));
+		offset += sizeof(uint32_t);
+#if _DEBUG
+		assert(offset - initial_offset == NET_DAMAGE_INSTANCE_BYTES_NEEDED);
+#endif
+	}
+
+	template <>
+	void get(span<const byte_type> buffer, size_type offset, Net_DamageInstance& out) noexcept {
+#if _DEBUG
+		size_type initial_offset = offset;
+#endif
+		out.time = extract<u32>(buffer, offset, 8 * sizeof(u32));
+		offset += 8 * sizeof(u32);
+
+		out.from = extract<NetworkId>(buffer, offset, 8 * sizeof(NetworkId));
+		offset += 8 * sizeof(NetworkId);
+
+		out.to = extract<NetworkId>(buffer, offset, 8 * sizeof(NetworkId));
+		offset += 8 * sizeof(NetworkId);
+
+		uint32_t temp;
+		temp = extract<uint32_t>(buffer, offset, 8 * sizeof(uint32_t));
+		out.hitPos.X = *reinterpret_cast<f32*>(&temp);
+		offset += 8 * sizeof(uint32_t);
+
+		temp = extract<uint32_t>(buffer, offset, 8 * sizeof(uint32_t));
+		out.hitPos.Y = *reinterpret_cast<f32*>(&temp);
+		offset += 8 * sizeof(uint32_t);
+
+		temp = extract<uint32_t>(buffer, offset, 8 * sizeof(uint32_t));
+		out.hitPos.Z = *reinterpret_cast<f32*>(&temp);
+		offset += 8 * sizeof(uint32_t);
+
+		out.type = static_cast<DAMAGE_TYPE>(extract<uint32_t>(buffer, offset, DAMAGE_BITS));
+		offset += DAMAGE_BITS;
+
+		temp = extract<uint32_t>(buffer, offset, 8 * sizeof(uint32_t));
+		out.amount = *reinterpret_cast<f32*>(&temp);
+		offset += sizeof(uint32_t);
+#if _DEBUG
+		assert(offset - initial_offset == NET_DAMAGE_INSTANCE_BYTES_NEEDED);
+#endif
 	}
 }
 
 
-void initializeNetworkingComponent(flecs::entity ent, uint16_t priority)
+void initializeNetworkingComponent(flecs::entity ent, uint16_t priority, NetworkId id)
 {
 	NetworkingComponent n;
 	n.priority = priority;
-	n.accumulatorEntry = std::shared_ptr<AccumulatorEntry>(new AccumulatorEntry(ent));
+	if (id)
+		n.networkedId = id;
+	else
+		n.networkedId = generateNewNetworkId();
+	n.accumulatorEntry = std::shared_ptr<AccumulatorEntry>(new AccumulatorEntry(n.networkedId));
+	//baedsLogger::log("Assigned network ID " + std::to_string(n.networkedId) + " to entity " + entDebugStr(ent) + "\n");
 	gameController->priorityAccumulator.push_back(n.accumulatorEntry);
+	stateController->networkToEntityDict.insert({ n.networkedId, ent });
+	//if (stateController->networkToEntityDict.contains(n.networkedId))
+		//baedsLogger::log("Dict has entity at ID " + std::to_string(n.networkedId) + "\n");
 	ent.set<NetworkingComponent>(n);
 }
 
@@ -591,22 +876,37 @@ void NetworkingUpdate()
 		while (!gameController->m_networkShotsToSend.empty() && location + NETWORK_SHOT_BYTES_NEEDED < MAX_DATA_SIZE)
 		{
 			auto networkShotToSend = gameController->m_networkShotsToSend.back();
+			gameController->m_networkShotsToSend.pop_back();
 			auto entry = reinterpret_cast<BulletCreationPacketData*>(((std::byte*)(&gameController->networkShotPacket.data)) + location);
 			bitpacker::store<Network_ShotFired&>(byte_span(entry->data, NETWORK_SHOT_BYTES_NEEDED), 0, networkShotToSend);
 			location += NETWORK_SHOT_BYTES_NEEDED;
 			gameController->networkShotPacket.numEntries++;
+		}
+		Packet damageInstancePacket;
+		damageInstancePacket.packetType = PTYPE_DAMAGE_INSTANCE;
+		damageInstancePacket.sequenceNumber = 0;
+		damageInstancePacket.numEntries = 0;
+		location = 0;
+		while (!gameController->networkDamageToSend.empty() && location + NET_DAMAGE_INSTANCE_BYTES_NEEDED < MAX_DATA_SIZE)
+		{
+			auto damageInstanceToSend = gameController->networkDamageToSend.back();
+			gameController->networkDamageToSend.pop_back();
+			auto entry = reinterpret_cast<DamageInstancePacketData*>(((std::byte*)(&damageInstancePacket.data)) + location);
+			bitpacker::store<Net_DamageInstance&>(byte_span(entry->data, NET_DAMAGE_INSTANCE_BYTES_NEEDED), 0, damageInstanceToSend);
+			location += NET_DAMAGE_INSTANCE_BYTES_NEEDED;
+			damageInstancePacket.numEntries++;
 		}
 		Packet deadEntityPacket;
 		deadEntityPacket.packetType = PTYPE_KILL;
 		deadEntityPacket.sequenceNumber = 0;
 		deadEntityPacket.numEntries = 0;
 		location = 0;
-		while (!gameController->getNetworkDeadEntities().empty() && location + sizeof(flecs::entity_t) < MAX_DATA_SIZE)
+		while (!gameController->getNetworkDeadEntities().empty() && location + sizeof(NetworkId) < MAX_DATA_SIZE)
 		{
-			flecs::entity deadEntity = gameController->getNetworkDeadEntities().back();
-			auto entry = reinterpret_cast<flecs::entity_t*>(((std::byte*)(&deadEntityPacket.data)) + location);
-			*entry = deadEntity.id();
-			location += sizeof(flecs::entity_t);
+			NetworkId deadEntity = gameController->getNetworkDeadEntities().back();
+			auto entry = reinterpret_cast<NetworkId*>(((std::byte*)(&deadEntityPacket.data)) + location);
+			*entry = deadEntity;
+			location += sizeof(NetworkId);
 			gameController->getNetworkDeadEntities().pop_back();
 		}
 
@@ -644,7 +944,7 @@ void NetworkingUpdate()
 					size_t location = 0;
 					for (int j = 0; j < receivedPacket->numEntries; j++)
 					{
-						auto entry = reinterpret_cast<const BulletCreationPacketData*>(&(receivedPacket->data) + location);
+						auto entry = reinterpret_cast<const BulletCreationPacketData*>(reinterpret_cast<const std::byte*>(&(receivedPacket->data)) + location);
 						bitpacker::get<>(const_byte_span(entry->data, NETWORK_SHOT_BYTES_NEEDED), 0, networkShot);
 						gameController->addShotFromNetwork(networkShot);
 						location += NETWORK_SHOT_BYTES_NEEDED;
@@ -656,11 +956,31 @@ void NetworkingUpdate()
 					size_t location = 0;
 					for (int j = 0; j < receivedPacket->numEntries; j++)
 					{
-						auto entity = *reinterpret_cast<const flecs::entity_t*>(&(receivedPacket->data) + location);
+						auto networkId = *reinterpret_cast<const NetworkId*>(reinterpret_cast<const std::byte*>(&(receivedPacket->data)) + location);
+						if (!stateController->networkToEntityDict.contains(networkId))
+						{
+							baedsLogger::errLog("Tried to mark networkId [" + std::to_string(networkId) + "] but it's not in the Network dict!\n");
+							continue;
+						}
+						auto entity = stateController->networkToEntityDict[networkId];
 						auto ent = game_world->entity(entity);
-						gameController->markForDeath(ent);
-						location += sizeof(flecs::entity_t);
+						gameController->markForDeath(ent, true);
+						location += sizeof(NetworkId);
 					}
+					break;
+				}
+				case PTYPE_DAMAGE_INSTANCE:
+				{
+					Net_DamageInstance networkDamage;
+					size_t location = 0;
+					for (int j = 0; j < receivedPacket->numEntries; j++)
+					{
+						auto entry = reinterpret_cast<const DamageInstancePacketData*>(reinterpret_cast<const std::byte*>(&(receivedPacket->data)) + location);
+						bitpacker::get<>(const_byte_span(entry->data, NETWORK_SHOT_BYTES_NEEDED), 0, networkDamage);
+						gameController->addDamageFromNetwork(networkDamage);
+						location += NET_DAMAGE_INSTANCE_BYTES_NEEDED;
+					}
+					break;
 				}
 				}
 				messages[i]->Release();
@@ -683,12 +1003,15 @@ void NetworkingUpdate()
 			}
 			if (deadEntityPacket.numEntries > 0)
 			{
-				auto res = stateController->steamNetworkingSockets->SendMessageToConnection(stateController->hostConnection, &deadEntityPacket, sizeof(Packet), k_nSteamNetworkingSend_Reliable, nullptr);
+				auto res = stateController->steamNetworkingSockets->SendMessageToConnection(client.connection, &deadEntityPacket, sizeof(Packet), k_nSteamNetworkingSend_Reliable, nullptr);
+			}
+			if (damageInstancePacket.numEntries > 0)
+			{
+				auto res = stateController->steamNetworkingSockets->SendMessageToConnection(client.connection, &damageInstancePacket, sizeof(Packet), k_nSteamNetworkingSend_Reliable, nullptr);
 			}
 		}
 		gameController->isPacketValid = false;
 		stateController->stateUpdatePacketIsValid = false;
-		gameController->m_networkShotsToSend.clear();
 	}
 	else if (stateController->hostConnection)
 	{
@@ -735,7 +1058,7 @@ void NetworkingUpdate()
 				size_t location = 0;
 				for (int j = 0; j < receivedPacket->numEntries; j++)
 				{
-					auto entry = reinterpret_cast<const BulletCreationPacketData*>(&(receivedPacket->data) + location);
+					auto entry = reinterpret_cast<const BulletCreationPacketData*>(reinterpret_cast<const std::byte*>(&(receivedPacket->data)) + location);
 					bitpacker::get<>(const_byte_span(entry->data, NETWORK_SHOT_BYTES_NEEDED), 0, networkShot);
 					gameController->addShotFromNetwork(networkShot);
 					location += NETWORK_SHOT_BYTES_NEEDED;
@@ -747,11 +1070,31 @@ void NetworkingUpdate()
 				size_t location = 0;
 				for (int j = 0; j < receivedPacket->numEntries; j++)
 				{
-					auto entity = *reinterpret_cast<const flecs::entity_t*>(&(receivedPacket->data) + location);
+					auto networkId = *reinterpret_cast<const NetworkId*>(reinterpret_cast<const std::byte*>(&(receivedPacket->data)) + location);
+					if (!stateController->networkToEntityDict.contains(networkId))
+					{
+						baedsLogger::errLog("Tried to mark networkId [" + std::to_string(networkId) + "] but it's not in the Network dict!\n");
+						continue;
+					}
+					auto entity = stateController->networkToEntityDict[networkId];
 					auto ent = game_world->entity(entity);
-					gameController->markForDeath(ent);
-					location += sizeof(flecs::entity_t);
+					gameController->markForDeath(ent, true);
+					location += sizeof(NetworkId);
 				}
+				break;
+			}
+			case PTYPE_DAMAGE_INSTANCE:
+			{
+				Net_DamageInstance networkDamage;
+				size_t location = 0;
+				for (int j = 0; j < receivedPacket->numEntries; j++)
+				{
+					auto entry = reinterpret_cast<const DamageInstancePacketData*>(reinterpret_cast<const std::byte*>(&(receivedPacket->data)) + location);
+					bitpacker::get<>(const_byte_span(entry->data, NETWORK_SHOT_BYTES_NEEDED), 0, networkDamage);
+					gameController->addDamageFromNetwork(networkDamage);
+					location += NET_DAMAGE_INSTANCE_BYTES_NEEDED;
+				}
+				break;
 			}
 			}
 			messages[i]->Release();
@@ -770,6 +1113,7 @@ void NetworkingUpdate()
 		while (!gameController->m_networkShotsToSend.empty() && location + NETWORK_SHOT_BYTES_NEEDED < MAX_DATA_SIZE)
 		{
 			auto networkShotToSend = gameController->m_networkShotsToSend.back();
+			gameController->m_networkShotsToSend.pop_back();
 			auto entry = reinterpret_cast<BulletCreationPacketData*>(((std::byte*)(&gameController->networkShotPacket.data)) + location);
 			bitpacker::store<Network_ShotFired&>(byte_span(entry->data, NETWORK_SHOT_BYTES_NEEDED), 0, networkShotToSend);
 			location += NETWORK_SHOT_BYTES_NEEDED;
@@ -784,18 +1128,33 @@ void NetworkingUpdate()
 		deadEntityPacket.sequenceNumber = 0;
 		deadEntityPacket.numEntries = 0;
 		location = 0;
-		while (!gameController->getNetworkDeadEntities().empty() && location + sizeof(flecs::entity_t) < MAX_DATA_SIZE)
+		while (!gameController->getNetworkDeadEntities().empty() && location + sizeof(NetworkId) < MAX_DATA_SIZE)
 		{
-			flecs::entity deadEntity = gameController->getNetworkDeadEntities().back();
-			auto entry = reinterpret_cast<flecs::entity_t*>(((std::byte*)(&deadEntityPacket.data)) + location);
-			*entry = deadEntity.id();
-			location += sizeof(flecs::entity_t);
+			NetworkId deadEntity = gameController->getNetworkDeadEntities().back();
 			gameController->getNetworkDeadEntities().pop_back();
+			auto entry = reinterpret_cast<NetworkId*>(((std::byte*)(&deadEntityPacket.data)) + location);
+			*entry = deadEntity;
+			location += sizeof(NetworkId);
 		}
 		if (deadEntityPacket.numEntries > 0)
 		{
 			auto res = stateController->steamNetworkingSockets->SendMessageToConnection(stateController->hostConnection, &deadEntityPacket, sizeof(Packet), k_nSteamNetworkingSend_Reliable, nullptr);
 		}
+		Packet damageInstancePacket;
+		damageInstancePacket.packetType = PTYPE_DAMAGE_INSTANCE;
+		damageInstancePacket.sequenceNumber = 0;
+		damageInstancePacket.numEntries = 0;
+		location = 0;
+		while (!gameController->networkDamageToSend.empty() && location + NET_DAMAGE_INSTANCE_BYTES_NEEDED < MAX_DATA_SIZE)
+		{
+			auto damageInstanceToSend = gameController->networkDamageToSend.back();
+			gameController->networkDamageToSend.pop_back();
+			auto entry = reinterpret_cast<DamageInstancePacketData*>(((std::byte*)(&damageInstancePacket.data)) + location);
+			bitpacker::store<Net_DamageInstance&>(byte_span(entry->data, NET_DAMAGE_INSTANCE_BYTES_NEEDED), 0, damageInstanceToSend);
+			location += NET_DAMAGE_INSTANCE_BYTES_NEEDED;
+			damageInstancePacket.numEntries++;
+		}
 	}
+
 }
 

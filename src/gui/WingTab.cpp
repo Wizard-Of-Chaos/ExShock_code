@@ -8,6 +8,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include "AudioDriver.h"
 
 void WingTab::show()
 {
@@ -316,7 +317,7 @@ bool WingTab::wingmanSelect(const SEvent& event)
 		if (campaign->getAssignedWingman(currentSlot)) campaign->removeAssignedWingman(currentSlot);
 	}
 	else campaign->setAssignedWingman(campaign->getWingman(id), currentSlot);
-
+	audioDriver->playMenuSound("wingman_select.ogg");
 	longdesc->setText(L"");
 	m_clearList();
 	m_displayCurrentWing();
@@ -336,15 +337,46 @@ bool WingTab::shipSelect(const SEvent& event)
 				"You can't de-select your own ship! How are you supposed to fly without one?", "Wings?");
 			guiController->showOkPopup();
 		}
-		else campaign->removeAssignedShip(currentSlot);
+		else {
+			audioDriver->playMenuSound("wingman_unassign.ogg");
+			campaign->removeAssignedShip(currentSlot);
+		}
 	}
 	else if (currentSlot == -1) {
-		campaign->setAssignedShip(campaign->getShip(id), currentSlot);
-		campaign->assignWingmanToShip(campaign->getPlayer(), campaign->getShip(id));
+		auto ship = campaign->getShip(id);
+		bool valid = true;
+		if (ship) {
+			if (ship->ship.shipDataId == 24) {
+				valid = false;
+				guiController->setOkPopup("Incompatible", "Non-Eci pilots cannot pilot the Orion. Theod would be offended that you even tried.");
+				guiController->showOkPopup();
+			}
+		}
+		if (valid) {
+			if(id != -5)
+				audioDriver->playMenuSound("wingman_assign.ogg");
+
+			campaign->setAssignedShip(campaign->getShip(id), currentSlot);
+			campaign->assignWingmanToShip(campaign->getPlayer(), campaign->getShip(id));
+		}
 	}
 	else {
-		campaign->setAssignedShip(campaign->getShip(id), currentSlot);
-		campaign->assignWingmanToShip(campaign->getAssignedWingman(currentSlot), campaign->getShip(id));
+		auto ship = campaign->getShip(id);
+		bool valid = true;
+		if (ship) {
+			if (ship->ship.shipDataId == 24 && campaign->getAssignedWingman(currentSlot)->id != 10) {
+				valid = false;
+				guiController->setOkPopup("Incompatible", "Non-Eci pilots cannot pilot the Orion. Theod would be offended that you even tried.");
+				guiController->showOkPopup();
+			}
+		}
+		if (valid) {
+			if (id != -5)
+				audioDriver->playMenuSound("wingman_assign.ogg");
+
+			campaign->setAssignedShip(campaign->getShip(id), currentSlot);
+			campaign->assignWingmanToShip(campaign->getAssignedWingman(currentSlot), campaign->getShip(id));
+		}
 	}
 	loadoutSideShipView.hide();
 	loadoutBottomShipView.hide();

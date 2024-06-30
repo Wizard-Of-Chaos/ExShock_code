@@ -15,7 +15,7 @@ std::vector<flecs::entity> createModularHumanStation(
 struct StationModuleData;
 
 //Creates a random loose human station module. No turrets, factions, hangars or anything else is added. Effectively debris.
-flecs::entity createLooseHumanModule(vector3df pos, vector3df rot, vector3df scale);
+flecs::entity createLooseHumanModule(vector3df pos, vector3df rot, vector3df scale, dataId id=INVALID_DATA_ID, NetworkId=INVALID_NETWORK_ID);
 
 //Builds a "branch" for a given station. This will add on appropriate randomly generated modules on the given slot. Called recursively on itself until it's out of pieces.
 void generateStationBranch(std::vector<flecs::entity>& retList, flecs::entity oldModule, s32 oldSlot, s32 numPieces, vector3df scale, FACTION_TYPE fac, bool hasShield = false, bool hasTurret = false, s32 turretId = 0, s32 wepId = 3);

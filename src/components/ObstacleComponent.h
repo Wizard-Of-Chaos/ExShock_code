@@ -9,7 +9,8 @@ enum OBSTACLE
 	ASTEROID,
 	ICE_ASTEROID,
 	RADIOACTIVE_ASTEROID,
-	HUGE_ASTEROID,
+	MONEY_ASTEROID,
+	CASH_NUGGET,
 	GAS_CLOUD,
 	SPACE_STATION,
 	DEBRIS,
@@ -22,7 +23,10 @@ enum OBSTACLE
 	DEAD_SHIP,
 	DEAD_WEAPON,
 	FLAT_BILLBOARD,
-	FLAT_BILLBOARD_ANIMATED
+	FLAT_BILLBOARD_ANIMATED,
+	MINE,
+	MISSILE,
+	HAYWIRE_TURRET
 };
 //Convenience map for types of obstacles that can be read from file.
 const std::unordered_map<std::string, OBSTACLE> obstacleStrings = {
@@ -36,7 +40,12 @@ const std::unordered_map<std::string, OBSTACLE> obstacleStrings = {
 	{"station_module", STATION_MODULE},
 	{"mesh_gascloud", MESH_GASCLOUD},
 	{"billboard", FLAT_BILLBOARD},
-	{"billboard_animated", FLAT_BILLBOARD_ANIMATED}
+	{"billboard_animated", FLAT_BILLBOARD_ANIMATED},
+
+	{"money_asteroid", MONEY_ASTEROID},
+	{"cash_nugget", CASH_NUGGET},
+	{"ice_asteroid", ICE_ASTEROID},
+	{"radioactive_asteroid", RADIOACTIVE_ASTEROID},
 };
 
 /*
@@ -48,6 +57,7 @@ struct ObstacleComponent
 	ObstacleComponent() {};
 	ObstacleComponent(OBSTACLE type) : type(type) {};
 	OBSTACLE type;
+	dataId obstacleDataId;
 };
 
 #endif 

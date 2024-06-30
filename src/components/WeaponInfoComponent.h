@@ -34,7 +34,8 @@ enum WEAPON_TYPE {
 	WEP_HEAVY_LASER = 6,
 	WEP_HEAVY_FLAMETHROWER =7,
 	WEP_HEAVY_RAILGUN=8,
-	WEP_ROCK = 9
+	WEP_ROCK = 9,
+	WEP_PHYS_SHIELD = 10
 };
 
 //A map for convenience when pulling values out of files.
@@ -50,7 +51,8 @@ const std::map<std::string, WEAPON_TYPE> weaponStrings{
 	{"heavy_missile", WEP_HEAVY_MISSILE},
 	{"heavy_flamethrower", WEP_HEAVY_FLAMETHROWER},
 	{"heavy_railgun", WEP_HEAVY_RAILGUN},
-	{"rock", WEP_ROCK}
+	{"rock", WEP_ROCK},
+	{"phys_shield", WEP_PHYS_SHIELD}
 };
 
 struct WeaponInfoComponent;
@@ -94,10 +96,10 @@ struct Network_ShotFired
 			directions[i] = vector3df(0);
 		}
 	}
-	flecs::entity_t firingWeapon = INVALID_ENTITY_ID;
+	uint32_t firingWeapon = INVALID_ENTITY_ID;
 	vector3df directions[MAX_PROJECTILES_PER_SHOT];
 	vector3df spawn = vector3df(0);
-	flecs::entity_t projIds[MAX_PROJECTILES_PER_SHOT];
+	uint32_t projIds[MAX_PROJECTILES_PER_SHOT];
 };
 
 /*
@@ -127,6 +129,7 @@ struct WeaponInfoComponent
 	f32 projectileSpeed = 500.f; //how fast the projectile goes
 	f32 lifetime = 2.f; //how long the projectile lasts in the world
 	f32 damage = 10.f;
+	f32 multiplier = 1.f;
 
 	bool usesAmmunition=false;
 	u32 maxAmmunition=0;
@@ -169,6 +172,7 @@ struct ProjectileInfoComponent
 	WEAPON_TYPE type;
 	DAMAGE_TYPE dmgtype;
 	f32 damage;
+	f32 multiplier;
 	f32 speed;
 	f32 lifetime;
 	f32 currentLifetime;

@@ -22,7 +22,7 @@ void GuiMainMenu::init()
 	buttonSize = dimension2du(300, 80);
 	//All buttons have the root node set as the parent. This allows a single call to root->setVisible in order to display or hide the menu.
 	singleplayer = guienv->addButton(rect<s32>(position2di(50, 4), buttonSize), screen, -1, L"Singleplayer", L"Start a new campaign or load one.");
-	multiplayer = guienv->addButton(rect<s32>(position2di(50,4 + buttonSize.Height), buttonSize), screen, -1, L"Multiplayer", L"Start a new campaign or load one.");
+	multiplayer = guienv->addButton(rect<s32>(position2di(50,4 + buttonSize.Height), buttonSize), screen, -1, L"Multiplayer", L"Currently undergoing some last minute debugging...");
 
 	settings = guienv->addButton(rect<s32>(position2di(50, 4 + buttonSize.Height * 2), buttonSize), screen, -1, L"Settings", L"Fiddle with difficulty and video.");
 	credits = guienv->addButton(rect<s32>(position2di(50, 4 + buttonSize.Height * 3), buttonSize), screen, -1, L"Credits", L"Appreciate the devs!");

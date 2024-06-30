@@ -15,6 +15,7 @@ class GuiOptionsMenu : public GuiDialog
 		bool onLoad(const SEvent& event);
 		bool onNew(const SEvent& event);
 		bool onNewConfirm(const SEvent& event);
+		bool onTutorialConfirm(const SEvent& event);
 		bool onSettings(const SEvent& event);
 		bool onExit(const SEvent& event);
 		bool onExitConfirm(const SEvent& event);

@@ -39,8 +39,8 @@ btVector3 getLocalAngularVelocity(btRigidBody* body);
 btVector3 getLocalLinearVelocity(btRigidBody* body);
 
 //Adds a bullet rigid body to the given entity.
-bool initializeBtConvexHull(flecs::entity entityId, btConvexHullShape shape, btVector3& scale, f32 mass, f32 startVel=0, f32 startRotVel=0);
-bool initBtRBC(flecs::entity id, btCollisionShape* shape, btVector3& scale, f32 mass, f32 startVel=0, f32 startRotVel=0);
+bool initializeBtConvexHull(flecs::entity entityId, btConvexHullShape shape, btVector3& scale, f32 mass, f32 startVel=0, f32 startRotVel=0, NetworkId id=0);
+bool initBtRBC(flecs::entity id, btCollisionShape* shape, btVector3& scale, f32 mass, f32 startVel=0, f32 startRotVel=0, NetworkId networkId = 0);
 
 //An extension of the bullet physics world with a helpful function that effectively deletes the world. Otherwise, it's the same.
 class BulletPhysicsWorld : public btDiscreteDynamicsWorldMt

@@ -141,6 +141,11 @@ const stringc ALTFONT20 = "assets/fonts/delta_block/20.xml";
 static const stringc _largeSizing()
 {
 	u32 width = driver->getScreenSize().Width;
+	if (width >= 4400) return "32";
+	if (width >= 3900) return "28";
+	if (width >= 3400) return "26";
+	if (width >= 2900) return "24";
+	if (width >= 2400) return "22";
 	if (width >= 1900) return "20";
 	if (width >= 1400) return "18";
 	if (width >= 900) return "16";
@@ -149,6 +154,11 @@ static const stringc _largeSizing()
 static const stringc _mediumSizing()
 {
 	u32 width = driver->getScreenSize().Width;
+	if (width >= 4400) return "28";
+	if (width >= 3900) return "28";
+	if (width >= 3400) return "24";
+	if (width >= 2900) return "22";
+	if (width >= 2400) return "20";
 	if (width >= 1900) return "18";
 	if (width >= 1400) return "16";
 	if (width >= 900) return "14";
@@ -157,6 +167,11 @@ static const stringc _mediumSizing()
 static const stringc _smallSizing()
 {
 	u32 width = driver->getScreenSize().Width;
+	if (width >= 4400) return "24";
+	if (width >= 3900) return "22";
+	if (width >= 3400) return "20";
+	if (width >= 2900) return "18";
+	if (width >= 2400) return "16";
 	if (width >= 1900) return "14";
 	if (width >= 1400) return "12";
 	return "10";
